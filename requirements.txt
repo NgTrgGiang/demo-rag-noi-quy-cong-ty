@@ -1,0 +1,15 @@
+# --- Thu vien loi (bat buoc) ---
+streamlit>=1.36
+chromadb>=0.5
+langchain-text-splitters>=0.2
+python-dotenv>=1.0
+pypdf>=4.2
+
+# --- Provider MAC DINH: OpenAI ---
+openai>=1.30
+
+# --- Provider tuy chon (chi cai neu ban doi PROVIDER trong config.py) ---
+# Google Gemini (free tier):
+# google-generativeai>=0.7
+# Ollama (chay local):
+# ollama>=0.3

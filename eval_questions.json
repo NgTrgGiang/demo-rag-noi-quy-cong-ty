@@ -1,0 +1,62 @@
+[
+  {
+    "question": "Giờ làm việc hành chính bắt đầu và kết thúc lúc mấy giờ?",
+    "expected": "Từ 8h30 đến 17h30, nghỉ trưa 12h-13h.",
+    "keywords": ["8h30", "17h30"],
+    "relevant_contains": "8h30 đến 17h30"
+  },
+  {
+    "question": "Nhân viên chính thức được bao nhiêu ngày phép năm?",
+    "expected": "12 ngày phép năm có lương.",
+    "keywords": ["12"],
+    "relevant_contains": "12 ngày phép năm"
+  },
+  {
+    "question": "Muốn nghỉ việc thì phải báo trước bao nhiêu ngày?",
+    "expected": "Nhân viên chính thức báo trước ít nhất 30 ngày.",
+    "keywords": ["30"],
+    "relevant_contains": "ít nhất 30 ngày"
+  },
+  {
+    "question": "Đi muộn bao nhiêu phút thì bị ghi nhận đi muộn?",
+    "expected": "Đi muộn quá 15 phút không báo trước.",
+    "keywords": ["15"],
+    "relevant_contains": "quá 15 phút"
+  },
+  {
+    "question": "Được làm việc từ xa tối đa mấy ngày mỗi tuần?",
+    "expected": "Tối đa 2 ngày mỗi tuần nếu được duyệt.",
+    "keywords": ["2", "tuần"],
+    "relevant_contains": "tối đa 2 ngày mỗi tuần"
+  },
+  {
+    "question": "Lương làm thêm giờ vào ngày lễ bằng bao nhiêu phần trăm?",
+    "expected": "Ngày lễ bằng 300% lương giờ.",
+    "keywords": ["300"],
+    "relevant_contains": "ngày lễ bằng 300%"
+  },
+  {
+    "question": "Thời gian thử việc thường kéo dài bao lâu?",
+    "expected": "Khoảng 2 tháng, tối đa 60 ngày.",
+    "keywords": ["2 tháng"],
+    "relevant_contains": "2 tháng đối với vị trí"
+  },
+  {
+    "question": "Lao động nữ được nghỉ thai sản mấy tháng?",
+    "expected": "6 tháng theo Luật Lao động.",
+    "keywords": ["6 tháng"],
+    "relevant_contains": "thai sản 6 tháng"
+  },
+  {
+    "question": "Báo cáo hành vi quấy rối thì gửi cho ai hoặc email nào?",
+    "expected": "Phòng Nhân sự (HR) hoặc email hr@vidu.com.",
+    "keywords": ["hr@vidu.com"],
+    "relevant_contains": "hr@vidu.com"
+  },
+  {
+    "question": "Công ty có hỗ trợ vay mua nhà cho nhân viên không?",
+    "expected": "Không có thông tin trong tài liệu (bot phải từ chối, không được bịa).",
+    "keywords": ["không tìm thấy thông tin này trong tài liệu"],
+    "relevant_contains": null
+  }
+]

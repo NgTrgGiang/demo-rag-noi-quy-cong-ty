@@ -1,0 +1,17 @@
+# Biến môi trường chứa API key -> KHÔNG bao giờ commit
+.env
+
+# Kho vector Chroma (tạo lại được bằng: python ingest.py)
+chroma_db/
+
+# Môi trường ảo Python
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# File hệ thống
+.DS_Store
+Thumbs.db
