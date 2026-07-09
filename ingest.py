@@ -69,11 +69,11 @@ def count_chunks(docs: list[dict]) -> int:
     return sum(len(splitter.split_text(doc["text"])) for doc in docs)
 
 
-def index_documents(collection, docs: list[dict], api_key: str | None = None) -> int:
+def index_documents(collection, docs: list[dict], settings=None) -> int:
     """Chunk + embed + add danh sách tài liệu vào MỘT collection Chroma.
 
     Dùng chung cho CLI (collection persist) và app (collection in-memory).
-    Trả về số đoạn (chunk) đã thêm.
+    `settings`: config.Settings của phiên (None = dùng mặc định). Trả về số đoạn đã thêm.
     """
     splitter = _make_splitter()
 
@@ -89,7 +89,7 @@ def index_documents(collection, docs: list[dict], api_key: str | None = None) ->
     if not chunks:
         return 0
 
-    embeddings = config.embed_texts(chunks, api_key=api_key)
+    embeddings = config.embed_texts(chunks, settings)
     collection.add(ids=ids, documents=chunks, embeddings=embeddings, metadatas=metadatas)
     return len(chunks)
 

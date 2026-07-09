@@ -1,17 +1,17 @@
 """
-config.py - Nơi DUY NHẤT để cấu hình dự án.
+config.py - Nơi cấu hình dự án.
 
-Muốn đổi nhà cung cấp (OpenAI / Gemini / Ollama) hay đổi tham số RAG
-(chunk_size, top_k...) thì chỉ cần sửa ở file này.
+- Các HẰNG mặc định (provider, model, chunk_size, top_k...) dùng cho luồng CLI.
+- Lớp `Settings`: gói cấu hình cho MỘT phiên (provider + key + tên model). App truyền
+  Settings này xuống để mỗi người dùng tự chọn provider/model/key mà không đụng biến
+  toàn cục (an toàn khi nhiều người dùng chung server).
 
-Ba hàm quan trọng ở cuối file:
-  - embed_texts(texts): nhúng NHIỀU đoạn văn bản -> danh sách vector (dùng khi ingest).
-  - embed_query(text):  nhúng 1 câu hỏi -> 1 vector (dùng khi truy hồi).
-  - chat(system, user): gọi LLM sinh câu trả lời.
-ingest.py và rag.py chỉ gọi 3 hàm này, KHÔNG cần biết đang dùng provider nào.
+Ba hàm cầu nối: embed_texts / embed_query / chat - nhận `settings` (None = dùng mặc định).
+ingest.py và rag.py chỉ gọi 3 hàm này, không cần biết chi tiết provider.
 """
 
 import os
+from dataclasses import dataclass
 
 from dotenv import load_dotenv
 
@@ -19,114 +19,120 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ============================================================
-# 1) CHỌN NHÀ CUNG CẤP (PROVIDER)
+# 1) PROVIDER + MODEL MẶC ĐỊNH (dùng cho luồng CLI khi không truyền Settings)
 # ============================================================
-# Đổi 1 dòng dưới đây để chuyển provider: "openai" | "gemini" | "ollama"
-# Có thể ghi đè bằng biến môi trường PROVIDER trong file .env.
-PROVIDER = os.getenv("PROVIDER", "openai").lower()
+PROVIDER = os.getenv("PROVIDER", "openai").lower()  # openai | gemini | ollama
+PROVIDERS = ["openai", "gemini", "ollama"]
 
-# ============================================================
-# 2) TÊN MODEL THEO TỪNG PROVIDER
-# ============================================================
+# Model mặc định của mỗi provider.
 MODELS = {
+    "openai": {"embedding": "text-embedding-3-small", "chat": "gpt-4o-mini"},
+    "gemini": {"embedding": "models/text-embedding-004", "chat": "gemini-1.5-flash"},
+    "ollama": {"embedding": "nomic-embed-text", "chat": "llama3.2"},
+}
+
+# Danh sách model cho người dùng CHỌN trên app (phần tử đầu là mặc định).
+MODEL_CHOICES = {
     "openai": {
-        "embedding": "text-embedding-3-small",  # rẻ, chất lượng tốt
-        "chat": "gpt-4o-mini",
+        "chat": ["gpt-4o-mini", "gpt-4o", "gpt-4.1-mini"],
+        "embedding": ["text-embedding-3-small", "text-embedding-3-large"],
     },
     "gemini": {
-        "embedding": "models/text-embedding-004",
-        "chat": "gemini-1.5-flash",
+        "chat": ["gemini-1.5-flash", "gemini-1.5-pro"],
+        "embedding": ["models/text-embedding-004"],
     },
     "ollama": {
-        # Nhớ chạy: ollama pull nomic-embed-text && ollama pull llama3.2
-        "embedding": "nomic-embed-text",
-        "chat": "llama3.2",
+        "chat": ["llama3.2", "llama3.1", "qwen2.5"],
+        "embedding": ["nomic-embed-text", "mxbai-embed-large"],
     },
 }
 
 # ============================================================
-# 3) THAM SỐ RAG (bạn có thể thử nghiệm để cải thiện chất lượng)
+# 2) THAM SỐ RAG + VECTOR STORE
 # ============================================================
 CHUNK_SIZE = 500  # độ dài mỗi đoạn (số ký tự)
 CHUNK_OVERLAP = 50  # phần gối đầu giữa 2 đoạn liền nhau (giữ ngữ cảnh liền mạch)
 TOP_K = 4  # số đoạn liên quan nhất lấy ra để làm ngữ cảnh
 
-# ============================================================
-# 4) NƠI LƯU VECTOR STORE (ChromaDB) - có persist để không phải nạp lại
-# ============================================================
-DATA_DIR = "data"  # thư mục chứa tài liệu nguồn
-CHROMA_DIR = "chroma_db"  # thư mục Chroma lưu dữ liệu xuống ổ đĩa
+DATA_DIR = "data"  # thư mục chứa tài liệu nguồn (luồng CLI)
+CHROMA_DIR = "chroma_db"  # thư mục Chroma lưu dữ liệu xuống ổ đĩa (luồng CLI)
 COLLECTION_NAME = "faq_noi_quy"  # tên "bảng" trong Chroma
 
 # Giới hạn khi người dùng tự upload tài liệu trên app (tránh nạp quá lớn, chậm/tốn kém).
 MAX_UPLOAD_MB = 5  # tổng dung lượng file upload tối đa (MB)
 MAX_CHUNKS = 400  # số đoạn tối đa sau khi cắt (chặn embed quá nhiều)
 
+
 # ============================================================
-# 5) HÀM CẦU NỐI - nhúng văn bản & gọi LLM (tự chọn theo PROVIDER)
+# 3) GÓI CẤU HÌNH THEO PHIÊN
 # ============================================================
-# Lưu ý: import SDK theo kiểu "lazy" (chỉ import khi cần) để bạn không phải
-# cài đủ cả 3 thư viện - chỉ cài thư viện của provider bạn đang dùng.
+@dataclass
+class Settings:
+    """Cấu hình cho 1 phiên: provider + key + tên model.
 
-
-def _model(kind: str) -> str:
-    """Lấy tên model theo provider hiện tại. kind = 'embedding' hoặc 'chat'."""
-    if PROVIDER not in MODELS:
-        raise ValueError(f"PROVIDER không hợp lệ: {PROVIDER}. Chọn openai | gemini | ollama.")
-    return MODELS[PROVIDER][kind]
-
-
-def embed_texts(texts: list[str], api_key: str | None = None) -> list[list[float]]:
-    """Nhúng một DANH SÁCH đoạn văn bản thành danh sách vector.
-
-    api_key: nếu truyền vào (vd người dùng tự nhập trên app) thì dùng key đó;
-    nếu None thì đọc từ biến môi trường (.env) như luồng CLI.
+    Để None ở các trường model -> tự lấy model mặc định của provider.
+    Để None ở api_key -> đọc từ biến môi trường (.env) - dùng cho luồng CLI.
     """
-    if PROVIDER == "openai":
+
+    provider: str = PROVIDER
+    api_key: str | None = None
+    embedding_model: str | None = None
+    chat_model: str | None = None
+
+    def _check(self):
+        if self.provider not in MODELS:
+            raise ValueError(f"Provider không hợp lệ: {self.provider}. Chọn {PROVIDERS}.")
+
+    def emb_model(self) -> str:
+        self._check()
+        return self.embedding_model or MODELS[self.provider]["embedding"]
+
+    def chat_model_name(self) -> str:
+        self._check()
+        return self.chat_model or MODELS[self.provider]["chat"]
+
+
+# ============================================================
+# 4) HÀM CẦU NỐI - nhúng văn bản & gọi LLM (import SDK theo kiểu lazy)
+# ============================================================
+def embed_texts(texts: list[str], settings: Settings | None = None) -> list[list[float]]:
+    """Nhúng một DANH SÁCH đoạn văn bản thành danh sách vector."""
+    s = settings or Settings()
+    if s.provider == "openai":
         from openai import OpenAI
 
-        client = OpenAI(api_key=api_key)  # api_key=None -> tự đọc OPENAI_API_KEY từ môi trường
-        resp = client.embeddings.create(model=_model("embedding"), input=texts)
+        client = OpenAI(api_key=s.api_key)  # api_key=None -> đọc OPENAI_API_KEY từ môi trường
+        resp = client.embeddings.create(model=s.emb_model(), input=texts)
         return [item.embedding for item in resp.data]
 
-    elif PROVIDER == "gemini":
+    elif s.provider == "gemini":
         import google.generativeai as genai
 
-        genai.configure(api_key=api_key or os.getenv("GOOGLE_API_KEY"))
-        vectors = []
-        for t in texts:
-            r = genai.embed_content(model=_model("embedding"), content=t)
-            vectors.append(r["embedding"])
-        return vectors
+        genai.configure(api_key=s.api_key or os.getenv("GOOGLE_API_KEY"))
+        return [genai.embed_content(model=s.emb_model(), content=t)["embedding"] for t in texts]
 
-    elif PROVIDER == "ollama":
+    elif s.provider == "ollama":
         import ollama
 
-        vectors = []
-        for t in texts:
-            r = ollama.embeddings(model=_model("embedding"), prompt=t)
-            vectors.append(r["embedding"])
-        return vectors
+        return [ollama.embeddings(model=s.emb_model(), prompt=t)["embedding"] for t in texts]
 
-    raise ValueError(f"PROVIDER không hợp lệ: {PROVIDER}")
+    raise ValueError(f"Provider không hợp lệ: {s.provider}")
 
 
-def embed_query(text: str, api_key: str | None = None) -> list[float]:
+def embed_query(text: str, settings: Settings | None = None) -> list[float]:
     """Nhúng 1 câu hỏi thành 1 vector (tái dùng embed_texts cho gọn)."""
-    return embed_texts([text], api_key=api_key)[0]
+    return embed_texts([text], settings)[0]
 
 
-def chat(system_prompt: str, user_prompt: str, api_key: str | None = None) -> str:
-    """Gọi LLM sinh câu trả lời. Nhận prompt hệ thống + prompt người dùng.
-
-    api_key: tương tự embed_texts - truyền key riêng hoặc để None đọc từ .env.
-    """
-    if PROVIDER == "openai":
+def chat(system_prompt: str, user_prompt: str, settings: Settings | None = None) -> str:
+    """Gọi LLM sinh câu trả lời. Nhận prompt hệ thống + prompt người dùng."""
+    s = settings or Settings()
+    if s.provider == "openai":
         from openai import OpenAI
 
-        client = OpenAI(api_key=api_key)
+        client = OpenAI(api_key=s.api_key)
         resp = client.chat.completions.create(
-            model=_model("chat"),
+            model=s.chat_model_name(),
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
@@ -135,19 +141,18 @@ def chat(system_prompt: str, user_prompt: str, api_key: str | None = None) -> st
         )
         return resp.choices[0].message.content
 
-    elif PROVIDER == "gemini":
+    elif s.provider == "gemini":
         import google.generativeai as genai
 
-        genai.configure(api_key=api_key or os.getenv("GOOGLE_API_KEY"))
-        model = genai.GenerativeModel(_model("chat"), system_instruction=system_prompt)
-        resp = model.generate_content(user_prompt)
-        return resp.text
+        genai.configure(api_key=s.api_key or os.getenv("GOOGLE_API_KEY"))
+        model = genai.GenerativeModel(s.chat_model_name(), system_instruction=system_prompt)
+        return model.generate_content(user_prompt).text
 
-    elif PROVIDER == "ollama":
+    elif s.provider == "ollama":
         import ollama
 
         resp = ollama.chat(
-            model=_model("chat"),
+            model=s.chat_model_name(),
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
@@ -156,4 +161,4 @@ def chat(system_prompt: str, user_prompt: str, api_key: str | None = None) -> st
         )
         return resp["message"]["content"]
 
-    raise ValueError(f"PROVIDER không hợp lệ: {PROVIDER}")
+    raise ValueError(f"Provider không hợp lệ: {s.provider}")

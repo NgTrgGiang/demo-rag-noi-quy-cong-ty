@@ -1,4 +1,4 @@
-"""Test cấu hình provider trong config.py."""
+"""Test cấu hình provider/model (Settings) trong config.py."""
 
 import pytest
 
@@ -6,22 +6,29 @@ import config
 
 
 def test_models_co_du_3_provider():
-    """MODELS phải khai báo đủ 3 provider, mỗi cái có embedding + chat."""
+    """MODELS + MODEL_CHOICES phải khai báo đủ 3 provider, mỗi cái có embedding + chat."""
     for provider in ("openai", "gemini", "ollama"):
         assert provider in config.MODELS
-        assert "embedding" in config.MODELS[provider]
-        assert "chat" in config.MODELS[provider]
+        assert set(config.MODEL_CHOICES[provider]) == {"chat", "embedding"}
 
 
-def test_lay_dung_ten_model_openai(monkeypatch):
-    """Với provider openai, _model() trả về đúng tên model mặc định."""
-    monkeypatch.setattr(config, "PROVIDER", "openai")
-    assert config._model("chat") == "gpt-4o-mini"
-    assert config._model("embedding") == "text-embedding-3-small"
+def test_settings_mac_dinh_dung_model_cua_provider():
+    """Settings mặc định (không override) -> lấy đúng model mặc định của provider."""
+    s = config.Settings(provider="openai")
+    assert s.chat_model_name() == "gpt-4o-mini"
+    assert s.emb_model() == "text-embedding-3-small"
 
 
-def test_provider_khong_hop_le_thi_bao_loi(monkeypatch):
+def test_settings_cho_phep_override_model():
+    """Người dùng chọn model khác -> Settings phải dùng model đó."""
+    s = config.Settings(
+        provider="openai", chat_model="gpt-4o", embedding_model="text-embedding-3-large"
+    )
+    assert s.chat_model_name() == "gpt-4o"
+    assert s.emb_model() == "text-embedding-3-large"
+
+
+def test_settings_provider_khong_hop_le_thi_bao_loi():
     """Provider lạ phải raise ValueError (tránh chạy nhầm cấu hình sai)."""
-    monkeypatch.setattr(config, "PROVIDER", "provider-khong-ton-tai")
     with pytest.raises(ValueError):
-        config._model("chat")
+        config.Settings(provider="provider-khong-ton-tai").chat_model_name()

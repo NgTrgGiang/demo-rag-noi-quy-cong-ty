@@ -42,9 +42,11 @@ Xây bằng **RAG (Retrieval-Augmented Generation)**: tìm đoạn tài liệu l
 
 Không cần cài đặt hay chỉnh code:
 
-1. Mở app, nhập **OpenAI API key của bạn** ở thanh bên (key chỉ dùng trong phiên, không lưu trữ).
+1. Mở app, ở thanh bên **chọn provider + model** và nhập **API key của bạn** (key chỉ dùng trong phiên, không lưu trữ).
 2. **Tải tài liệu của bạn lên** (PDF / Markdown / TXT) - hoặc bấm **Dùng tài liệu mẫu**.
 3. Hỏi đáp; câu trả lời kèm **Nguồn tham khảo** trích từ chính tài liệu bạn nạp.
+
+> Cấu hình (provider/model/key) được **khoá theo phiên** lúc nạp tài liệu. Muốn đổi provider/model? Bấm **Nạp tài liệu khác** rồi chọn lại (phải nạp lại vì embedding phụ thuộc model).
 
 > **Quyền riêng tư**: tài liệu xử lý trong bộ nhớ **theo từng phiên** (ChromaDB in-memory), không ghi ra đĩa và không dùng chung giữa người dùng. API key không bị lưu hay ghi log.
 

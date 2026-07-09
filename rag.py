@@ -46,9 +46,7 @@ def open_persistent_collection():
         ) from None
 
 
-def retrieve(
-    question: str, collection, top_k: int | None = None, api_key: str | None = None
-) -> list[dict]:
+def retrieve(question: str, collection, top_k: int | None = None, settings=None) -> list[dict]:
     """Truy hồi top_k đoạn liên quan nhất tới câu hỏi TRONG collection được truyền vào.
 
     Trả về danh sách dict: {label, source, chunk, text, distance}.
@@ -57,7 +55,7 @@ def retrieve(
     top_k = top_k or config.TOP_K
 
     # Nhúng câu hỏi rồi truy vấn Chroma
-    q_vector = config.embed_query(question, api_key=api_key)
+    q_vector = config.embed_query(question, settings)
     res = collection.query(
         query_embeddings=[q_vector],
         n_results=top_k,
@@ -90,12 +88,13 @@ def _build_context(chunks: list[dict]) -> str:
     return "\n\n".join(parts)
 
 
-def answer(question: str, collection, api_key: str | None = None) -> dict:
+def answer(question: str, collection, settings=None) -> dict:
     """Trả lời 1 câu hỏi bằng RAG dựa trên collection được truyền vào.
 
+    `settings`: config.Settings của phiên (None = dùng mặc định).
     Trả về dict: {'answer': <chuỗi trả lời>, 'sources': <danh sách đoạn đã dùng>}.
     """
-    chunks = retrieve(question, collection, api_key=api_key)
+    chunks = retrieve(question, collection, settings=settings)
 
     # Nếu kho rỗng (không có đoạn nào) -> trả lời từ chối luôn cho an toàn
     if not chunks:
@@ -107,8 +106,8 @@ def answer(question: str, collection, api_key: str | None = None) -> dict:
     context = _build_context(chunks)
     user_prompt = USER_TEMPLATE.format(context=context, question=question)
 
-    # Gọi LLM (hàm chat tự chọn provider theo config.PROVIDER)
-    reply = config.chat(SYSTEM_PROMPT, user_prompt, api_key=api_key).strip()
+    # Gọi LLM theo cấu hình phiên (provider/model/key trong settings)
+    reply = config.chat(SYSTEM_PROMPT, user_prompt, settings).strip()
 
     return {"answer": reply, "sources": chunks}
 

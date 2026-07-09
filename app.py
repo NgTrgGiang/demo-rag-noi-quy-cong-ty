@@ -1,9 +1,9 @@
 """
 app.py - Giao diện chat self-serve bằng Streamlit.
 
-Người dùng tự nhập OpenAI API key + tải tài liệu của họ lên, rồi hỏi đáp ngay.
-Tài liệu được nạp vào kho vector IN-MEMORY theo từng phiên (không lưu đĩa, không
-lẫn dữ liệu giữa người dùng). Key chỉ dùng trong phiên, không được lưu trữ.
+Người dùng tự chọn provider + model, nhập API key, và tải tài liệu của họ lên rồi hỏi đáp.
+Tài liệu nạp vào kho vector IN-MEMORY theo từng phiên (không lưu đĩa, không lẫn dữ liệu
+giữa người dùng). Cấu hình (provider/model/key) được "khoá" theo phiên lúc nạp tài liệu.
 
 Chạy:  streamlit run app.py
 """
@@ -17,26 +17,24 @@ import rag
 st.set_page_config(page_title="Bot hỏi đáp tài liệu (RAG)")
 st.title("Bot hỏi đáp tài liệu của bạn (RAG)")
 st.caption(
-    "Tải tài liệu của bạn lên (PDF / Markdown / TXT), hỏi đáp có trích nguồn, không bịa. "
-    "Dữ liệu xử lý trong bộ nhớ theo phiên, không lưu trữ."
+    "Chọn provider/model, nhập API key, tải tài liệu (PDF / Markdown / TXT) và hỏi đáp có "
+    "trích nguồn. Dữ liệu xử lý trong bộ nhớ theo phiên, không lưu trữ."
 )
 
 # ---- Khởi tạo trạng thái phiên ----
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-if "collection" not in st.session_state:
-    st.session_state.collection = None  # kho vector của phiên (None = chưa nạp tài liệu)
-if "doc_info" not in st.session_state:
-    st.session_state.doc_info = None
+st.session_state.setdefault("messages", [])
+st.session_state.setdefault("collection", None)  # None = chưa nạp tài liệu
+st.session_state.setdefault("doc_info", None)
+st.session_state.setdefault("settings", None)  # config.Settings đã khoá lúc nạp
 
 
 # ============================================================
 # Hàm phụ
 # ============================================================
-def build_session_index(docs: list[dict], api_key: str):
+def build_session_index(docs: list[dict], settings: config.Settings):
     """Tạo kho vector in-memory từ danh sách tài liệu, lưu vào session_state."""
-    if not api_key:
-        st.error("Hãy nhập OpenAI API key ở thanh bên trước.")
+    if settings.provider in ("openai", "gemini") and not settings.api_key:
+        st.error(f"Hãy nhập API key cho provider '{settings.provider}' ở thanh bên.")
         return
     if not docs:
         st.warning("Chưa có tài liệu nào để nạp.")
@@ -60,14 +58,15 @@ def build_session_index(docs: list[dict], api_key: str):
         client = chromadb.EphemeralClient()  # kho in-memory, mất khi đóng phiên
         collection = client.create_collection("session_docs")
         try:
-            n = ingest.index_documents(collection, docs, api_key=api_key)
+            n = ingest.index_documents(collection, docs, settings=settings)
         except Exception as e:
-            st.error(f"Lỗi khi nạp tài liệu (kiểm tra lại API key?): {e}")
+            st.error(f"Lỗi khi nạp tài liệu (kiểm tra lại API key / model?): {e}")
             return
 
     # Lưu vào phiên (giữ cả client để kho không bị giải phóng)
     st.session_state.chroma_client = client
     st.session_state.collection = collection
+    st.session_state.settings = settings
     st.session_state.doc_info = {"sources": [d["source"] for d in docs], "chunks": n}
     st.session_state.messages = []
     st.rerun()
@@ -87,23 +86,43 @@ def render_sources(sources: list[dict]):
 
 
 # ============================================================
-# Thanh bên: API key + điều khiển
+# Thanh bên: cấu hình (khi chưa nạp) hoặc điều khiển (khi đã nạp)
 # ============================================================
 with st.sidebar:
     st.header("Cấu hình")
-    api_key = st.text_input(
-        "OpenAI API key",
-        type="password",
-        key="api_key",
-        help="Key chỉ dùng trong phiên của bạn, không được lưu trữ. Lấy tại platform.openai.com/api-keys",
-    )
-    st.markdown("[Lấy API key ->](https://platform.openai.com/api-keys)")
-    st.divider()
 
-    if st.session_state.collection is not None:
+    if st.session_state.collection is None:
+        # Chọn provider -> model -> key (áp dụng cho lần "Nạp tài liệu" tiếp theo)
+        provider = st.selectbox("Provider", config.PROVIDERS, key="provider")
+        chat_model = st.selectbox("Model trả lời (LLM)", config.MODEL_CHOICES[provider]["chat"])
+        emb_model = st.selectbox("Model embedding", config.MODEL_CHOICES[provider]["embedding"])
+
+        if provider == "ollama":
+            api_key = ""
+            st.caption("Ollama chạy local - không cần API key.")
+        else:
+            api_key = st.text_input(
+                f"{provider} API key",
+                type="password",
+                key="api_key",
+                help="Key chỉ dùng trong phiên của bạn, không được lưu trữ.",
+            )
+        if provider == "openai":
+            st.markdown("[Lấy OpenAI key ->](https://platform.openai.com/api-keys)")
+        elif provider in ("gemini",):
+            st.caption("Gemini/Ollama cần cài thêm thư viện (xem README).")
+    else:
+        # Đã nạp: hiển thị cấu hình đang dùng + nút điều khiển
+        s = st.session_state.settings
+        st.caption(
+            f"Provider: **{s.provider}**\n\n"
+            f"LLM: `{s.chat_model_name()}`\n\n"
+            f"Embedding: `{s.emb_model()}`"
+        )
         if st.button("Nạp tài liệu khác", use_container_width=True):
             st.session_state.collection = None
             st.session_state.doc_info = None
+            st.session_state.settings = None
             st.session_state.messages = []
             st.rerun()
         if st.button("Xóa hội thoại", use_container_width=True):
@@ -124,6 +143,14 @@ if st.session_state.collection is None:
     )
     st.caption(f"Giới hạn: tổng {config.MAX_UPLOAD_MB} MB, tối đa {config.MAX_CHUNKS} đoạn.")
 
+    # Gói cấu hình từ các lựa chọn ở thanh bên
+    settings = config.Settings(
+        provider=provider,
+        api_key=(api_key or None),
+        embedding_model=emb_model,
+        chat_model=chat_model,
+    )
+
     col1, col2 = st.columns(2)
     with col1:
         if st.button("Nạp tài liệu", type="primary", use_container_width=True):
@@ -137,14 +164,10 @@ if st.session_state.collection is None:
             if total > config.MAX_UPLOAD_MB * 1024 * 1024:
                 st.error(f"Tổng dung lượng vượt {config.MAX_UPLOAD_MB} MB.")
             else:
-                build_session_index(docs, st.session_state.get("api_key", ""))
+                build_session_index(docs, settings)
     with col2:
         if st.button("Dùng tài liệu mẫu", use_container_width=True):
-            sample = ingest.load_documents(config.DATA_DIR)
-            build_session_index(sample, st.session_state.get("api_key", ""))
-
-    if not st.session_state.get("api_key"):
-        st.info("Nhập OpenAI API key ở thanh bên để bắt đầu.")
+            build_session_index(ingest.load_documents(config.DATA_DIR), settings)
 
 else:
     # --- Trạng thái 2: đã nạp tài liệu -> chat ---
@@ -172,7 +195,7 @@ else:
                     result = rag.answer(
                         question,
                         st.session_state.collection,
-                        api_key=st.session_state.get("api_key", ""),
+                        settings=st.session_state.settings,
                     )
                     answer_text = result["answer"]
                     sources = result["sources"]
