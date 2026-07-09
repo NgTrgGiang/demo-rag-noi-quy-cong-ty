@@ -1,5 +1,5 @@
 """
-app.py — Giao diện chat bằng Streamlit.
+app.py - Giao diện chat bằng Streamlit.
 
 Chạy:  streamlit run app.py
 (Nhớ chạy 'python ingest.py' trước để tạo kho vector.)
@@ -11,11 +11,11 @@ import config
 import rag
 
 # ---- Cấu hình trang ----
-st.set_page_config(page_title="Bot hỏi đáp Nội quy công ty", page_icon="🤖")
-st.title("🤖 Bot hỏi đáp Nội quy công ty (RAG)")
+st.set_page_config(page_title="Bot hỏi đáp Nội quy công ty")
+st.title("Bot hỏi đáp Nội quy công ty (RAG)")
 st.caption(
-    f"Trả lời dựa trên tài liệu trong thư mục `data/` · Provider: "
-    f"**{config.PROVIDER}** · top_k = {config.TOP_K}"
+    f"Trả lời dựa trên tài liệu trong thư mục `data/` | Provider: "
+    f"**{config.PROVIDER}** | top_k = {config.TOP_K}"
 )
 
 # ---- Lịch sử hội thoại lưu trong phiên làm việc (session_state) ----
@@ -26,7 +26,7 @@ if "messages" not in st.session_state:
 # ---- Thanh bên: nút xóa hội thoại + gợi ý câu hỏi ----
 with st.sidebar:
     st.header("Tùy chọn")
-    if st.button("🗑️ Xóa hội thoại", use_container_width=True):
+    if st.button("Xóa hội thoại", use_container_width=True):
         st.session_state.messages = []
         st.rerun()
 
@@ -43,11 +43,11 @@ def render_sources(sources: list[dict]):
     """Hiển thị phần 'Nguồn tham khảo' dạng mở rộng được."""
     if not sources:
         return
-    with st.expander("📎 Nguồn tham khảo"):
+    with st.expander("Nguồn tham khảo"):
         for s in sources:
             st.markdown(
-                f"**[{s['label']}]** · `{s['source']}` · đoạn {s['chunk']} "
-                f"· độ gần: {s['distance']:.3f}"
+                f"**[{s['label']}]** | `{s['source']}` | đoạn {s['chunk']} "
+                f"| độ gần: {s['distance']:.3f}"
             )
             st.caption(s["text"])
 
@@ -74,7 +74,7 @@ if question := st.chat_input("Nhập câu hỏi về nội quy công ty..."):
                 answer_text = result["answer"]
                 sources = result["sources"]
             except Exception as e:
-                answer_text = f"⚠️ Lỗi: {e}"
+                answer_text = f"Lỗi: {e}"
                 sources = []
 
         st.markdown(answer_text)

@@ -1,4 +1,4 @@
-# 🤖 Bot hỏi đáp FAQ Nội quy công ty (RAG)
+# Bot hỏi đáp FAQ Nội quy công ty (RAG)
 
 Chatbot trả lời câu hỏi **dựa trên tài liệu FAQ bạn cung cấp**, có **trích nguồn** và **không bịa**.
 Khi tài liệu không có thông tin, bot trả lời: *"Mình không tìm thấy thông tin này trong tài liệu."*
@@ -7,34 +7,34 @@ Xây bằng **RAG (Retrieval-Augmented Generation)**: tìm đoạn tài liệu l
 
 ---
 
-## 🏗️ Kiến trúc (luồng xử lý)
+## Kiến trúc (luồng xử lý)
 
 ```
-        [ Giai đoạn NẠP DỮ LIỆU — chạy 1 lần: python ingest.py ]
+        [ Giai đoạn NẠP DỮ LIỆU - chạy 1 lần: python ingest.py ]
 
    data/ (PDF/MD/TXT)
-          │  đọc text
-          ▼
+          |  đọc text
+          v
      Chunking            (RecursiveCharacterTextSplitter, chunk_size=500, overlap=50)
-          │  cắt thành đoạn nhỏ
-          ▼
-     Embedding           (text-embedding-3-small) → biến mỗi đoạn thành vector
-          │
-          ▼
-     ChromaDB (persist)  → lưu vector xuống ổ đĩa (thư mục chroma_db/)
+          |  cắt thành đoạn nhỏ
+          v
+     Embedding           (text-embedding-3-small) -> biến mỗi đoạn thành vector
+          |
+          v
+     ChromaDB (persist)  -> lưu vector xuống ổ đĩa (thư mục chroma_db/)
 
 
-        [ Giai đoạn HỎI ĐÁP — mỗi câu hỏi: app.py / rag.py ]
+        [ Giai đoạn HỎI ĐÁP - mỗi câu hỏi: app.py / rag.py ]
 
    Câu hỏi
-          │  embed câu hỏi
-          ▼
-     Retrieval           → tìm top_k=4 đoạn gần nghĩa nhất trong ChromaDB
-          │  ghép thành "ngữ cảnh" + kèm tên file/vị trí (để trích nguồn)
-          ▼
-     Prompt + LLM        (gpt-4o-mini) → chỉ trả lời dựa trên ngữ cảnh
-          │
-          ▼
+          |  embed câu hỏi
+          v
+     Retrieval           -> tìm top_k=4 đoạn gần nghĩa nhất trong ChromaDB
+          |  ghép thành "ngữ cảnh" + kèm tên file/vị trí (để trích nguồn)
+          v
+     Prompt + LLM        (gpt-4o-mini) -> chỉ trả lời dựa trên ngữ cảnh
+          |
+          v
      Câu trả lời + "Nguồn tham khảo"
 ```
 
@@ -42,16 +42,16 @@ Xây bằng **RAG (Retrieval-Augmented Generation)**: tìm đoạn tài liệu l
 
 | File | Vai trò |
 |------|---------|
-| `config.py` | ⚙️ Cấu hình MỘT nơi: provider, model, chunk_size, top_k... |
-| `ingest.py` | 📥 Đọc `data/` → chunk → embed → lưu ChromaDB |
-| `rag.py` | 🧠 Phần lõi: retrieval + ghép prompt + gọi LLM (dùng lại được) |
-| `app.py` | 💬 Giao diện chat Streamlit |
-| `eval.py` | 📊 Chấm điểm chất lượng + đo tốc độ |
-| `data/` | 📄 Tài liệu nguồn của bạn |
+| `config.py` | Cấu hình MỘT nơi: provider, model, chunk_size, top_k... |
+| `ingest.py` | Đọc `data/` -> chunk -> embed -> lưu ChromaDB |
+| `rag.py` | Phần lõi: retrieval + ghép prompt + gọi LLM (dùng lại được) |
+| `app.py` | Giao diện chat Streamlit |
+| `eval.py` | Chấm điểm chất lượng + đo tốc độ |
+| `data/` | Tài liệu nguồn của bạn |
 
 ---
 
-## 🚀 Hướng dẫn chạy (Windows PowerShell)
+## Hướng dẫn chạy (Windows PowerShell)
 
 ### 1. Tạo môi trường ảo & cài thư viện
 ```powershell
@@ -88,67 +88,67 @@ python eval.py
 
 ---
 
-## 📄 Thay tài liệu của bạn
+## Thay tài liệu của bạn
 
 1. Xoá file mẫu trong `data/` (nếu muốn) và bỏ file **PDF / Markdown / TXT** của bạn vào.
 2. Chạy lại:
    ```powershell
    python ingest.py
    ```
-   (Lệnh này tự xoá kho cũ và tạo lại từ tài liệu mới — không lo trùng dữ liệu.)
+   (Lệnh này tự xoá kho cũ và tạo lại từ tài liệu mới - không lo trùng dữ liệu.)
 3. Cập nhật `eval_questions.json` cho khớp nội dung tài liệu mới (để chấm điểm đúng).
 
 ---
 
-## 📊 Đánh giá & cách cải thiện
+## Đánh giá & cách cải thiện
 
 `python eval.py` chấm theo **3 tầng** để tách rõ lỗi ở khâu *tìm đoạn* hay khâu *trả lời*:
 
 | Tầng | Chỉ số | Ý nghĩa |
 |------|--------|---------|
 | 1. Retrieval | **Hit Rate@k**, **MRR@k** | Kho vector có lấy đúng đoạn chứa đáp án không? (MRR=1.0 nghĩa là đoạn đúng luôn đứng số 1) |
-| 2. Keyword | Số câu đúng | Baseline nhanh, miễn phí — câu trả lời có chứa từ khóa bắt buộc không |
-| 3. LLM-judge | Số câu đúng | Dùng LLM chấm "đúng ý" (kể cả diễn đạt khác) — sát người nhất |
+| 2. Keyword | Số câu đúng | Baseline nhanh, miễn phí - câu trả lời có chứa từ khóa bắt buộc không |
+| 3. LLM-judge | Số câu đúng | Dùng LLM chấm "đúng ý" (kể cả diễn đạt khác) - sát người nhất |
 
 ```powershell
 python eval.py              # chạy đủ 3 tầng (tầng 3 tốn ~10 lượt gọi LLM)
 python eval.py --no-judge   # bỏ tầng 3 để khỏi tốn tiền
 ```
 
-**Cách đọc kết quả → biết sửa khâu nào:**
-- **Hit Rate / MRR thấp** → lỗi khâu *retrieval* (tìm sai đoạn). Sửa: tăng `TOP_K`, chỉnh `CHUNK_SIZE`, hoặc đổi embedding.
-- **Retrieval cao nhưng LLM-judge thấp** → tìm đúng đoạn rồi nhưng LLM trả lời tệ. Sửa: chỉnh `SYSTEM_PROMPT` trong `rag.py`.
-- Câu **ngoài tài liệu** (vay mua nhà) mà bot vẫn bịa → prompt chống-bịa chưa đủ mạnh.
+**Cách đọc kết quả để biết sửa khâu nào:**
+- **Hit Rate / MRR thấp** -> lỗi khâu *retrieval* (tìm sai đoạn). Sửa: tăng `TOP_K`, chỉnh `CHUNK_SIZE`, hoặc đổi embedding.
+- **Retrieval cao nhưng LLM-judge thấp** -> tìm đúng đoạn rồi nhưng LLM trả lời tệ. Sửa: chỉnh `SYSTEM_PROMPT` trong `rag.py`.
+- Câu **ngoài tài liệu** (vay mua nhà) mà bot vẫn bịa -> prompt chống-bịa chưa đủ mạnh.
 
 **Các "núm vặn" để cải thiện (chỉnh trong `config.py`):**
 | Vấn đề | Thử điều chỉnh |
 |--------|----------------|
-| Bot thiếu ngữ cảnh, trả lời cụt | Tăng `TOP_K` (4 → 6) |
-| Đoạn bị cắt mất ý | Tăng `CHUNK_SIZE` (500 → 800) hoặc `CHUNK_OVERLAP` (50 → 100) |
+| Bot thiếu ngữ cảnh, trả lời cụt | Tăng `TOP_K` (4 -> 6) |
+| Đoạn bị cắt mất ý | Tăng `CHUNK_SIZE` (500 -> 800) hoặc `CHUNK_OVERLAP` (50 -> 100) |
 | Bot lấy đoạn không liên quan | Giảm `CHUNK_SIZE`, viết tài liệu rõ ràng hơn |
 | Bot bịa / không trích nguồn | Chỉnh `SYSTEM_PROMPT` trong `rag.py` cho nghiêm hơn |
 > Sau mỗi lần đổi tham số chunk, phải chạy lại `python ingest.py`.
 
 ---
 
-## ☁️ Deploy miễn phí lên Streamlit Community Cloud
+## Deploy miễn phí lên Streamlit Community Cloud
 
-1. Đẩy code lên GitHub (file `.env` đã được `.gitignore` bỏ qua — **an toàn**).
-2. Vào https://share.streamlit.io → **New app** → chọn repo, nhánh, file `app.py`.
-3. Mục **Advanced settings → Secrets**, dán key (định dạng TOML):
+1. Đẩy code lên GitHub (file `.env` đã được `.gitignore` bỏ qua - **an toàn**).
+2. Vào https://share.streamlit.io -> **New app** -> chọn repo, nhánh, file `app.py`.
+3. Mục **Advanced settings -> Secrets**, dán key (định dạng TOML):
    ```toml
    PROVIDER = "openai"
    OPENAI_API_KEY = "sk-..."
    ```
 4. Bấm **Deploy**.
 
-> ⚠️ Chroma trên cloud sẽ trống. Cách đơn giản: **commit sẵn thư mục `chroma_db/`** lên GitHub
+> Lưu ý: Chroma trên cloud sẽ trống. Cách đơn giản: **commit sẵn thư mục `chroma_db/`** lên GitHub
 > (tạm bỏ dòng `chroma_db/` trong `.gitignore`), hoặc gọi `ingest.py` trong `app.py` lần đầu chạy.
 > Với dự án portfolio nhỏ, commit sẵn `chroma_db/` là nhanh nhất.
 
 ---
 
-## 🔄 Đổi sang provider miễn phí
+## Đổi sang provider miễn phí
 
 Trong `config.py` (hoặc file `.env`) đổi `PROVIDER`:
 - **Gemini (free):** `PROVIDER=gemini`, thêm `GOOGLE_API_KEY` vào `.env`, cài `pip install google-generativeai`.
@@ -158,7 +158,7 @@ Sau khi đổi provider embedding, chạy lại `python ingest.py` (vì vector k
 
 ---
 
-## 🧰 Lỗi thường gặp & cách sửa
+## Lỗi thường gặp & cách sửa
 
 | Lỗi | Nguyên nhân & cách sửa |
 |-----|------------------------|

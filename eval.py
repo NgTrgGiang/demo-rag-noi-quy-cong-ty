@@ -1,19 +1,19 @@
 """
-eval.py — Chấm điểm chất lượng bot theo 3 TẦNG (chuẩn đánh giá RAG).
+eval.py - Chấm điểm chất lượng bot theo 3 TẦNG (chuẩn đánh giá RAG).
 
 Vì sao tách 3 tầng? Để khi điểm thấp, bạn biết NÊN SỬA KHÂU NÀO:
   TẦNG 1 - RETRIEVAL  : Kho vector có lấy ĐÚNG đoạn chứa đáp án không?
-      • Hit Rate@k : tỉ lệ câu mà trong top-k có ít nhất 1 đoạn đúng.
-      • MRR@k      : trung bình của 1/thứ_hạng đoạn đúng đầu tiên
-                     (đoạn đúng đứng càng trên → điểm càng cao; hạng 1 = 1.0).
-      → Điểm thấp = lỗi ở khâu TÌM (chunking/embedding/top_k), KHÔNG phải LLM.
+      - Hit Rate@k : tỉ lệ câu mà trong top-k có ít nhất 1 đoạn đúng.
+      - MRR@k      : trung bình của 1/thứ_hạng đoạn đúng đầu tiên
+                     (đoạn đúng đứng càng trên -> điểm càng cao; hạng 1 = 1.0).
+      -> Điểm thấp = lỗi ở khâu TÌM (chunking/embedding/top_k), KHÔNG phải LLM.
 
   TẦNG 2 - KEYWORD    : Câu trả lời có chứa từ khóa bắt buộc không?
-      → Nhanh, miễn phí, deterministic. Dùng làm "baseline" kiểm tra thô.
+      -> Nhanh, miễn phí, deterministic. Dùng làm "baseline" kiểm tra thô.
 
   TẦNG 3 - LLM-JUDGE  : Dùng LLM chấm câu trả lời có ĐÚNG Ý không (kể cả diễn đạt khác).
-      → Sát với đánh giá của con người nhất. Tốn 1 lượt gọi LLM mỗi câu.
-      → Tắt bằng cờ:  python eval.py --no-judge
+      -> Sát với đánh giá của con người nhất. Tốn 1 lượt gọi LLM mỗi câu.
+      -> Tắt bằng cờ:  python eval.py --no-judge
 
 Chạy:  python eval.py            (chạy đủ 3 tầng)
        python eval.py --no-judge (bỏ tầng LLM-judge để khỏi tốn tiền)
@@ -176,9 +176,9 @@ def main():
     print(f"Thời gian TB mỗi câu   : {total_time / n:.2f}s")
     print("=" * 78)
     print("\nGợi ý đọc kết quả:")
-    print("  • Hit Rate/MRR thấp  -> sửa khâu TÌM: tăng top_k, chỉnh chunk_size, đổi embedding.")
-    print("  • Retrieval cao nhưng Judge thấp -> sửa khâu TRẢ LỜI: chỉnh SYSTEM_PROMPT trong rag.py.")
-    print("  • Keyword và Judge lệch nhau -> keyword đang chấm quá thô, tin Judge hơn.")
+    print("  - Hit Rate/MRR thấp  -> sửa khâu TÌM: tăng top_k, chỉnh chunk_size, đổi embedding.")
+    print("  - Retrieval cao nhưng Judge thấp -> sửa khâu TRẢ LỜI: chỉnh SYSTEM_PROMPT trong rag.py.")
+    print("  - Keyword và Judge lệch nhau -> keyword đang chấm quá thô, tin Judge hơn.")
 
 
 if __name__ == "__main__":

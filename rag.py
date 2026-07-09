@@ -1,5 +1,5 @@
 """
-rag.py — Phần lõi RAG (dùng lại cho cả app.py và eval.py).
+rag.py - Phần lõi RAG (dùng lại cho cả app.py và eval.py).
 
 Luồng của hàm answer(question):
   câu hỏi -> nhúng thành vector -> tìm top_k đoạn gần nghĩa nhất trong Chroma
@@ -12,7 +12,7 @@ import chromadb
 import config
 
 # ============================================================
-# PROMPT HỆ THỐNG — ép LLM tuân thủ luật để KHÔNG bịa
+# PROMPT HỆ THỐNG - ép LLM tuân thủ luật để KHÔNG bịa
 # ============================================================
 SYSTEM_PROMPT = """Bạn là trợ lý hỏi đáp nội bộ, chỉ trả lời dựa trên NGỮ CẢNH được cung cấp.
 
@@ -114,8 +114,8 @@ if __name__ == "__main__":
     import sys
     q = " ".join(sys.argv[1:]) or "Giờ làm việc hành chính là mấy giờ?"
     out = answer(q)
-    print("❓", q)
-    print("\n💬", out["answer"])
-    print("\n📎 Các đoạn đã dùng:")
+    print("Câu hỏi:", q)
+    print("\nTrả lời:", out["answer"])
+    print("\nCác đoạn đã dùng:")
     for s in out["sources"]:
         print(f"  - [{s['label']}] {s['source']} (đoạn {s['chunk']}, distance={s['distance']:.3f})")

@@ -1,5 +1,5 @@
 """
-ingest.py — Nạp tài liệu vào kho vector (ChromaDB).
+ingest.py - Nạp tài liệu vào kho vector (ChromaDB).
 
 Luồng xử lý:
   data/ (PDF, MD, TXT)  ->  đọc text  ->  cắt nhỏ (chunk)
@@ -50,10 +50,10 @@ def main():
     # 1) Đọc tài liệu nguồn
     docs = load_documents(config.DATA_DIR)
     if not docs:
-        print(f"⚠️  Không tìm thấy tài liệu nào trong '{config.DATA_DIR}/'.")
+        print(f"[!] Không tìm thấy tài liệu nào trong '{config.DATA_DIR}/'.")
         print("    Hãy đặt file .pdf / .md / .txt vào đó rồi chạy lại.")
         return
-    print(f"📄 Đã đọc {len(docs)} tài liệu: {[d['source'] for d in docs]}")
+    print(f"Đã đọc {len(docs)} tài liệu: {[d['source'] for d in docs]}")
 
     # 2) Cắt nhỏ (chunk) từng tài liệu
     #    RecursiveCharacterTextSplitter cố cắt theo đoạn/câu trước, tránh cắt giữa từ.
@@ -70,11 +70,11 @@ def main():
             # Lưu metadata để sau này TRÍCH NGUỒN được: tên file + số thứ tự đoạn
             metadatas.append({"source": doc["source"], "chunk": i})
             ids.append(f"{doc['source']}::chunk::{i}")
-    print(f"✂️  Đã cắt thành {len(chunks)} đoạn (chunk_size={config.CHUNK_SIZE}, "
+    print(f"Đã cắt thành {len(chunks)} đoạn (chunk_size={config.CHUNK_SIZE}, "
           f"overlap={config.CHUNK_OVERLAP}).")
 
     # 3) Nhúng (embed) tất cả các đoạn thành vector
-    print(f"🔢 Đang nhúng {len(chunks)} đoạn bằng provider '{config.PROVIDER}'...")
+    print(f"Đang nhúng {len(chunks)} đoạn bằng provider '{config.PROVIDER}'...")
     embeddings = config.embed_texts(chunks)
 
     # 4) Lưu vào ChromaDB (persist ra thư mục config.CHROMA_DIR)
@@ -94,7 +94,7 @@ def main():
         metadatas=metadatas,
     )
 
-    print(f"✅ Xong! Đã lưu {collection.count()} đoạn vào Chroma tại '{config.CHROMA_DIR}/'.")
+    print(f"Xong! Đã lưu {collection.count()} đoạn vào Chroma tại '{config.CHROMA_DIR}/'.")
     print("   Giờ bạn có thể chạy:  streamlit run app.py")
 
 

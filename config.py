@@ -1,5 +1,5 @@
 """
-config.py — Nơi DUY NHẤT để cấu hình dự án.
+config.py - Nơi DUY NHẤT để cấu hình dự án.
 
 Muốn đổi nhà cung cấp (OpenAI / Gemini / Ollama) hay đổi tham số RAG
 (chunk_size, top_k...) thì chỉ cần sửa ở file này.
@@ -51,17 +51,17 @@ CHUNK_OVERLAP = 50    # phần gối đầu giữa 2 đoạn liền nhau (giữ 
 TOP_K = 4             # số đoạn liên quan nhất lấy ra để làm ngữ cảnh
 
 # ============================================================
-# 4) NƠI LƯU VECTOR STORE (ChromaDB) — có persist để không phải nạp lại
+# 4) NƠI LƯU VECTOR STORE (ChromaDB) - có persist để không phải nạp lại
 # ============================================================
 DATA_DIR = "data"                 # thư mục chứa tài liệu nguồn
 CHROMA_DIR = "chroma_db"          # thư mục Chroma lưu dữ liệu xuống ổ đĩa
 COLLECTION_NAME = "faq_noi_quy"   # tên "bảng" trong Chroma
 
 # ============================================================
-# 5) HÀM CẦU NỐI — nhúng văn bản & gọi LLM (tự chọn theo PROVIDER)
+# 5) HÀM CẦU NỐI - nhúng văn bản & gọi LLM (tự chọn theo PROVIDER)
 # ============================================================
 # Lưu ý: import SDK theo kiểu "lazy" (chỉ import khi cần) để bạn không phải
-# cài đủ cả 3 thư viện — chỉ cài thư viện của provider bạn đang dùng.
+# cài đủ cả 3 thư viện - chỉ cài thư viện của provider bạn đang dùng.
 
 def _model(kind: str) -> str:
     """Lấy tên model theo provider hiện tại. kind = 'embedding' hoặc 'chat'."""
