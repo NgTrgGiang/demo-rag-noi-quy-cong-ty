@@ -38,7 +38,15 @@ Xây bằng **RAG (Retrieval-Augmented Generation)**: tìm đoạn tài liệu l
 | Giao diện | Streamlit |
 | Chất lượng code | ruff (lint/format) · pytest · GitHub Actions CI |
 
-## Demo
+## Demo (self-serve - ai cũng dùng được ngay)
+
+Không cần cài đặt hay chỉnh code:
+
+1. Mở app, nhập **OpenAI API key của bạn** ở thanh bên (key chỉ dùng trong phiên, không lưu trữ).
+2. **Tải tài liệu của bạn lên** (PDF / Markdown / TXT) - hoặc bấm **Dùng tài liệu mẫu**.
+3. Hỏi đáp; câu trả lời kèm **Nguồn tham khảo** trích từ chính tài liệu bạn nạp.
+
+> **Quyền riêng tư**: tài liệu xử lý trong bộ nhớ **theo từng phiên** (ChromaDB in-memory), không ghi ra đĩa và không dùng chung giữa người dùng. API key không bị lưu hay ghi log.
 
 - **Live demo**: *(sẽ cập nhật sau khi deploy lên Streamlit Community Cloud)*
 - **Chạy local**: xem mục **Hướng dẫn chạy** bên dưới.
@@ -100,39 +108,32 @@ pip install -r requirements.txt
 > Nếu PowerShell báo lỗi chặn script khi activate, chạy 1 lần:
 > `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned`
 
-### 2. Đặt API key
-```powershell
-copy .env.example .env
-notepad .env      # điền OPENAI_API_KEY=sk-... rồi lưu lại
-```
-> Lấy key tại https://platform.openai.com/api-keys (cần nạp tối thiểu ~5 USD).
-
-### 3. Nạp dữ liệu vào kho vector (chạy 1 lần)
-```powershell
-python ingest.py
-```
-
-### 4. Chạy giao diện chat
+### 2. Chạy app (cách nhanh nhất - self-serve)
 ```powershell
 streamlit run app.py
 ```
-Trình duyệt sẽ mở tại `http://localhost:8501`. Bắt đầu hỏi!
+Mở `http://localhost:8501` -> nhập **OpenAI API key** ở thanh bên -> **tải tài liệu lên** (hoặc bấm **Dùng tài liệu mẫu**) -> hỏi. Không cần `.env` hay `ingest.py`.
 
-### (Tuỳ chọn) Chấm điểm chất lượng
+### 3. (Tuỳ chọn) Luồng CLI + đánh giá
+Dùng khi muốn chạy pipeline bằng dòng lệnh và chấm điểm chất lượng:
 ```powershell
-python eval.py
+copy .env.example .env
+notepad .env                              # điền OPENAI_API_KEY=sk-...
+python ingest.py                          # nạp data/ vào kho vector (persist)
+python rag.py "Giờ làm việc là mấy giờ?"  # test nhanh phần lõi
+python eval.py                            # chấm điểm 3 tầng
 ```
+> Lấy key tại https://platform.openai.com/api-keys (cần nạp tối thiểu ~5 USD).
 
 ---
 
 ## Thay tài liệu của bạn
 
+**Cách 1 (nhanh nhất) - upload trên app:** mở app, bấm **Dùng tài liệu khác** ở thanh bên rồi tải file của bạn lên. Không cần dòng lệnh.
+
+**Cách 2 - luồng CLI (cho pipeline/eval):**
 1. Xoá file mẫu trong `data/` (nếu muốn) và bỏ file **PDF / Markdown / TXT** của bạn vào.
-2. Chạy lại:
-   ```powershell
-   python ingest.py
-   ```
-   (Lệnh này tự xoá kho cũ và tạo lại từ tài liệu mới - không lo trùng dữ liệu.)
+2. Chạy lại `python ingest.py` (tự xoá kho cũ và tạo lại từ tài liệu mới).
 3. Cập nhật `eval_questions.json` cho khớp nội dung tài liệu mới (để chấm điểm đúng).
 
 ---
@@ -182,16 +183,11 @@ python eval.py --no-judge   # bỏ tầng 3 để khỏi tốn tiền
 
 1. Đẩy code lên GitHub (file `.env` đã được `.gitignore` bỏ qua - **an toàn**).
 2. Vào https://share.streamlit.io -> **New app** -> chọn repo, nhánh, file `app.py`.
-3. Mục **Advanced settings -> Secrets**, dán key (định dạng TOML):
-   ```toml
-   PROVIDER = "openai"
-   OPENAI_API_KEY = "sk-..."
-   ```
-4. Bấm **Deploy**.
+3. Bấm **Deploy**. Xong! **Không cần đặt Secrets** - mỗi người dùng tự nhập OpenAI key của họ trên giao diện.
 
-> Lưu ý: Chroma trên cloud sẽ trống. Cách đơn giản: **commit sẵn thư mục `chroma_db/`** lên GitHub
-> (tạm bỏ dòng `chroma_db/` trong `.gitignore`), hoặc gọi `ingest.py` trong `app.py` lần đầu chạy.
-> Với dự án portfolio nhỏ, commit sẵn `chroma_db/` là nhanh nhất.
+> App dùng kho vector **in-memory theo phiên** từ tài liệu người dùng upload, nên KHÔNG cần `chroma_db/` trên cloud.
+>
+> Muốn TỰ trả tiền (khách khỏi nhập key)? Đặt `OPENAI_API_KEY` vào **Secrets** rồi sửa `app.py` ưu tiên lấy key từ `st.secrets` - nhớ kèm giới hạn (dung lượng, số câu hỏi) để tránh bị lạm dụng.
 
 ---
 

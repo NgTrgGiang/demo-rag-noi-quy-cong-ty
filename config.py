@@ -58,6 +58,10 @@ DATA_DIR = "data"  # thư mục chứa tài liệu nguồn
 CHROMA_DIR = "chroma_db"  # thư mục Chroma lưu dữ liệu xuống ổ đĩa
 COLLECTION_NAME = "faq_noi_quy"  # tên "bảng" trong Chroma
 
+# Giới hạn khi người dùng tự upload tài liệu trên app (tránh nạp quá lớn, chậm/tốn kém).
+MAX_UPLOAD_MB = 5  # tổng dung lượng file upload tối đa (MB)
+MAX_CHUNKS = 400  # số đoạn tối đa sau khi cắt (chặn embed quá nhiều)
+
 # ============================================================
 # 5) HÀM CẦU NỐI - nhúng văn bản & gọi LLM (tự chọn theo PROVIDER)
 # ============================================================
@@ -72,19 +76,23 @@ def _model(kind: str) -> str:
     return MODELS[PROVIDER][kind]
 
 
-def embed_texts(texts: list[str]) -> list[list[float]]:
-    """Nhúng một DANH SÁCH đoạn văn bản thành danh sách vector."""
+def embed_texts(texts: list[str], api_key: str | None = None) -> list[list[float]]:
+    """Nhúng một DANH SÁCH đoạn văn bản thành danh sách vector.
+
+    api_key: nếu truyền vào (vd người dùng tự nhập trên app) thì dùng key đó;
+    nếu None thì đọc từ biến môi trường (.env) như luồng CLI.
+    """
     if PROVIDER == "openai":
         from openai import OpenAI
 
-        client = OpenAI()  # tự đọc OPENAI_API_KEY từ môi trường
+        client = OpenAI(api_key=api_key)  # api_key=None -> tự đọc OPENAI_API_KEY từ môi trường
         resp = client.embeddings.create(model=_model("embedding"), input=texts)
         return [item.embedding for item in resp.data]
 
     elif PROVIDER == "gemini":
         import google.generativeai as genai
 
-        genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+        genai.configure(api_key=api_key or os.getenv("GOOGLE_API_KEY"))
         vectors = []
         for t in texts:
             r = genai.embed_content(model=_model("embedding"), content=t)
@@ -103,17 +111,20 @@ def embed_texts(texts: list[str]) -> list[list[float]]:
     raise ValueError(f"PROVIDER không hợp lệ: {PROVIDER}")
 
 
-def embed_query(text: str) -> list[float]:
+def embed_query(text: str, api_key: str | None = None) -> list[float]:
     """Nhúng 1 câu hỏi thành 1 vector (tái dùng embed_texts cho gọn)."""
-    return embed_texts([text])[0]
+    return embed_texts([text], api_key=api_key)[0]
 
 
-def chat(system_prompt: str, user_prompt: str) -> str:
-    """Gọi LLM sinh câu trả lời. Nhận prompt hệ thống + prompt người dùng."""
+def chat(system_prompt: str, user_prompt: str, api_key: str | None = None) -> str:
+    """Gọi LLM sinh câu trả lời. Nhận prompt hệ thống + prompt người dùng.
+
+    api_key: tương tự embed_texts - truyền key riêng hoặc để None đọc từ .env.
+    """
     if PROVIDER == "openai":
         from openai import OpenAI
 
-        client = OpenAI()
+        client = OpenAI(api_key=api_key)
         resp = client.chat.completions.create(
             model=_model("chat"),
             messages=[
@@ -127,7 +138,7 @@ def chat(system_prompt: str, user_prompt: str) -> str:
     elif PROVIDER == "gemini":
         import google.generativeai as genai
 
-        genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+        genai.configure(api_key=api_key or os.getenv("GOOGLE_API_KEY"))
         model = genai.GenerativeModel(_model("chat"), system_instruction=system_prompt)
         resp = model.generate_content(user_prompt)
         return resp.text

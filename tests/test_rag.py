@@ -23,7 +23,7 @@ def test_system_prompt_co_cau_tu_choi_chuan():
 
 def test_answer_tra_ve_tu_choi_khi_khong_co_doan(monkeypatch):
     """Nếu retrieve() không trả về đoạn nào -> answer() phải từ chối, không gọi LLM."""
-    monkeypatch.setattr(rag, "retrieve", lambda question: [])
-    out = rag.answer("Câu hỏi bất kỳ")
+    monkeypatch.setattr(rag, "retrieve", lambda *args, **kwargs: [])
+    out = rag.answer("Câu hỏi bất kỳ", collection=None)
     assert out["answer"] == "Mình không tìm thấy thông tin này trong tài liệu."
     assert out["sources"] == []

@@ -98,6 +98,9 @@ def main():
     with open("eval_questions.json", encoding="utf-8") as f:
         questions = json.load(f)
 
+    # Mở kho vector đã ingest (dùng chung cho mọi câu hỏi trong lần chấm này)
+    collection = rag.open_persistent_collection()
+
     # Bộ đếm cho từng tầng
     kw_correct = 0  # tầng 2
     judge_correct = 0  # tầng 3
@@ -121,7 +124,7 @@ def main():
 
         # Gọi RAG (đo thời gian trả lời thực tế)
         start = time.time()
-        result = rag.answer(q)
+        result = rag.answer(q, collection)
         elapsed = time.time() - start
         total_time += elapsed
 

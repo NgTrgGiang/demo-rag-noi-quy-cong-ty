@@ -1,44 +1,60 @@
 """
 ingest.py - Nạp tài liệu vào kho vector (ChromaDB).
 
-Luồng xử lý:
-  data/ (PDF, MD, TXT)  ->  đọc text  ->  cắt nhỏ (chunk)
-                        ->  nhúng (embed)  ->  lưu vào ChromaDB (persist ra ổ đĩa)
+Chứa các hàm dùng chung cho CẢ HAI luồng:
+  - CLI:  python ingest.py   -> đọc data/ trên đĩa, lưu vào Chroma persist.
+  - App:  app.py             -> đọc file người dùng upload, lưu vào Chroma in-memory.
 
-Chạy lại file này mỗi khi bạn THÊM hoặc SỬA tài liệu trong thư mục data/.
-    python ingest.py
+Luồng xử lý: đọc text -> cắt nhỏ (chunk) -> nhúng (embed) -> add vào collection.
 """
 
 import glob
+import io
 import os
-
-import chromadb
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 import config
 
 
+def _make_splitter():
+    """Tạo bộ cắt văn bản (import muộn để đọc file upload không cần cài langchain)."""
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+    return RecursiveCharacterTextSplitter(
+        chunk_size=config.CHUNK_SIZE,
+        chunk_overlap=config.CHUNK_OVERLAP,
+    )
+
+
+def _pdf_to_text(source) -> str:
+    """Đọc PDF (source có thể là đường dẫn hoặc file-like/BytesIO) -> text ghép các trang."""
+    from pypdf import PdfReader
+
+    reader = PdfReader(source)
+    return "\n".join((page.extract_text() or "") for page in reader.pages)
+
+
 def doc_text(path: str) -> str:
-    """Đọc nội dung 1 file thành chuỗi text. Hỗ trợ .pdf, .md, .txt."""
+    """Đọc nội dung 1 file trên đĩa thành chuỗi text. Hỗ trợ .pdf, .md, .txt."""
     ext = os.path.splitext(path)[1].lower()
-
     if ext == ".pdf":
-        # Đọc PDF theo từng trang rồi ghép lại
-        from pypdf import PdfReader
-
-        reader = PdfReader(path)
-        pages = [(page.extract_text() or "") for page in reader.pages]
-        return "\n".join(pages)
-
+        return _pdf_to_text(path)
     # .md và .txt: đọc trực tiếp dạng văn bản
     with open(path, encoding="utf-8") as f:
         return f.read()
 
 
+def text_from_upload(name: str, data: bytes) -> str:
+    """Đọc text từ file người dùng UPLOAD (dạng bytes). Dùng trong app.py."""
+    ext = os.path.splitext(name)[1].lower()
+    if ext == ".pdf":
+        return _pdf_to_text(io.BytesIO(data))
+    # .md và .txt: giải mã UTF-8, bỏ qua ký tự lỗi cho an toàn
+    return data.decode("utf-8", errors="ignore")
+
+
 def load_documents(data_dir: str) -> list[dict]:
     """Đọc tất cả file trong data/ -> danh sách {'source': tên_file, 'text': nội_dung}."""
     docs = []
-    # Duyệt các định dạng được hỗ trợ
     for pattern in ("*.pdf", "*.md", "*.txt"):
         for path in glob.glob(os.path.join(data_dir, pattern)):
             text = doc_text(path).strip()
@@ -47,8 +63,41 @@ def load_documents(data_dir: str) -> list[dict]:
     return docs
 
 
+def count_chunks(docs: list[dict]) -> int:
+    """Đếm trước số đoạn sẽ tạo (để kiểm tra giới hạn MAX_CHUNKS trước khi embed)."""
+    splitter = _make_splitter()
+    return sum(len(splitter.split_text(doc["text"])) for doc in docs)
+
+
+def index_documents(collection, docs: list[dict], api_key: str | None = None) -> int:
+    """Chunk + embed + add danh sách tài liệu vào MỘT collection Chroma.
+
+    Dùng chung cho CLI (collection persist) và app (collection in-memory).
+    Trả về số đoạn (chunk) đã thêm.
+    """
+    splitter = _make_splitter()
+
+    chunks, metadatas, ids = [], [], []
+    for doc in docs:
+        pieces = splitter.split_text(doc["text"])
+        for i, piece in enumerate(pieces):
+            chunks.append(piece)
+            # Metadata để TRÍCH NGUỒN được: tên file + số thứ tự đoạn
+            metadatas.append({"source": doc["source"], "chunk": i})
+            ids.append(f"{doc['source']}::chunk::{i}")
+
+    if not chunks:
+        return 0
+
+    embeddings = config.embed_texts(chunks, api_key=api_key)
+    collection.add(ids=ids, documents=chunks, embeddings=embeddings, metadatas=metadatas)
+    return len(chunks)
+
+
 def main():
-    # 1) Đọc tài liệu nguồn
+    """Luồng CLI: đọc data/ -> lưu vào Chroma persist (chạy: python ingest.py)."""
+    import chromadb
+
     docs = load_documents(config.DATA_DIR)
     if not docs:
         print(f"[!] Không tìm thấy tài liệu nào trong '{config.DATA_DIR}/'.")
@@ -56,47 +105,19 @@ def main():
         return
     print(f"Đã đọc {len(docs)} tài liệu: {[d['source'] for d in docs]}")
 
-    # 2) Cắt nhỏ (chunk) từng tài liệu
-    #    RecursiveCharacterTextSplitter cố cắt theo đoạn/câu trước, tránh cắt giữa từ.
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=config.CHUNK_SIZE,
-        chunk_overlap=config.CHUNK_OVERLAP,
-    )
-
-    chunks, metadatas, ids = [], [], []
-    for doc in docs:
-        pieces = splitter.split_text(doc["text"])
-        for i, piece in enumerate(pieces):
-            chunks.append(piece)
-            # Lưu metadata để sau này TRÍCH NGUỒN được: tên file + số thứ tự đoạn
-            metadatas.append({"source": doc["source"], "chunk": i})
-            ids.append(f"{doc['source']}::chunk::{i}")
-    print(
-        f"Đã cắt thành {len(chunks)} đoạn (chunk_size={config.CHUNK_SIZE}, "
-        f"overlap={config.CHUNK_OVERLAP})."
-    )
-
-    # 3) Nhúng (embed) tất cả các đoạn thành vector
-    print(f"Đang nhúng {len(chunks)} đoạn bằng provider '{config.PROVIDER}'...")
-    embeddings = config.embed_texts(chunks)
-
-    # 4) Lưu vào ChromaDB (persist ra thư mục config.CHROMA_DIR)
+    # Tạo lại collection persistent (xoá cũ để không trùng dữ liệu)
     client = chromadb.PersistentClient(path=config.CHROMA_DIR)
-
-    # Xoá collection cũ (nếu có) để không bị trùng dữ liệu khi ingest lại
     try:
         client.delete_collection(config.COLLECTION_NAME)
     except Exception:
         pass  # chưa có thì bỏ qua
-
     collection = client.create_collection(config.COLLECTION_NAME)
-    collection.add(
-        ids=ids,
-        documents=chunks,
-        embeddings=embeddings,
-        metadatas=metadatas,
-    )
 
+    print(f"Đang cắt & nhúng bằng provider '{config.PROVIDER}'...")
+    n = index_documents(collection, docs)
+    print(
+        f"Đã cắt thành {n} đoạn (chunk_size={config.CHUNK_SIZE}, overlap={config.CHUNK_OVERLAP})."
+    )
     print(f"Xong! Đã lưu {collection.count()} đoạn vào Chroma tại '{config.CHROMA_DIR}/'.")
     print("   Giờ bạn có thể chạy:  streamlit run app.py")
 

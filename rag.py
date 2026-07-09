@@ -32,8 +32,8 @@ CÂU HỎI: {question}
 Hãy trả lời theo đúng các QUY TẮC BẮT BUỘC ở trên."""
 
 
-def _get_collection():
-    """Mở collection Chroma đã persist. Báo lỗi rõ ràng nếu chưa ingest."""
+def open_persistent_collection():
+    """Mở collection Chroma đã persist (dùng cho CLI/eval). Báo lỗi rõ nếu chưa ingest."""
     # Import muộn (lazy) để việc chỉ dùng các hàm khác không cần cài sẵn chromadb.
     import chromadb
 
@@ -46,17 +46,18 @@ def _get_collection():
         ) from None
 
 
-def retrieve(question: str, top_k: int | None = None) -> list[dict]:
-    """Truy hồi top_k đoạn liên quan nhất tới câu hỏi.
+def retrieve(
+    question: str, collection, top_k: int | None = None, api_key: str | None = None
+) -> list[dict]:
+    """Truy hồi top_k đoạn liên quan nhất tới câu hỏi TRONG collection được truyền vào.
 
     Trả về danh sách dict: {label, source, chunk, text, distance}.
     - distance càng NHỎ nghĩa là càng gần nghĩa (liên quan hơn).
     """
     top_k = top_k or config.TOP_K
-    collection = _get_collection()
 
     # Nhúng câu hỏi rồi truy vấn Chroma
-    q_vector = config.embed_query(question)
+    q_vector = config.embed_query(question, api_key=api_key)
     res = collection.query(
         query_embeddings=[q_vector],
         n_results=top_k,
@@ -89,12 +90,12 @@ def _build_context(chunks: list[dict]) -> str:
     return "\n\n".join(parts)
 
 
-def answer(question: str) -> dict:
-    """Trả lời 1 câu hỏi bằng RAG.
+def answer(question: str, collection, api_key: str | None = None) -> dict:
+    """Trả lời 1 câu hỏi bằng RAG dựa trên collection được truyền vào.
 
     Trả về dict: {'answer': <chuỗi trả lời>, 'sources': <danh sách đoạn đã dùng>}.
     """
-    chunks = retrieve(question)
+    chunks = retrieve(question, collection, api_key=api_key)
 
     # Nếu kho rỗng (không có đoạn nào) -> trả lời từ chối luôn cho an toàn
     if not chunks:
@@ -107,7 +108,7 @@ def answer(question: str) -> dict:
     user_prompt = USER_TEMPLATE.format(context=context, question=question)
 
     # Gọi LLM (hàm chat tự chọn provider theo config.PROVIDER)
-    reply = config.chat(SYSTEM_PROMPT, user_prompt).strip()
+    reply = config.chat(SYSTEM_PROMPT, user_prompt, api_key=api_key).strip()
 
     return {"answer": reply, "sources": chunks}
 
@@ -117,7 +118,8 @@ if __name__ == "__main__":
     import sys
 
     q = " ".join(sys.argv[1:]) or "Giờ làm việc hành chính là mấy giờ?"
-    out = answer(q)
+    coll = open_persistent_collection()
+    out = answer(q, coll)
     print("Câu hỏi:", q)
     print("\nTrả lời:", out["answer"])
     print("\nCác đoạn đã dùng:")
