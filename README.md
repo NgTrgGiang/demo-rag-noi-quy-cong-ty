@@ -1,5 +1,9 @@
 # Bot hỏi đáp FAQ Nội quy công ty (RAG)
 
+![Demo pipeline RAG dạng terminal](docs/pipeline.svg)
+
+> Ảnh terminal phía trên là **ảnh động**: animation chạy khi xem trên GitHub. (Trong preview của VS Code sẽ hiện bản tĩnh đã "gõ" xong — đó là hạn chế của SVG động, không phải lỗi.)
+
 Chatbot trả lời câu hỏi **dựa trên tài liệu FAQ bạn cung cấp**, có **trích nguồn** và **không bịa**.
 Khi tài liệu không có thông tin, bot trả lời: *"Mình không tìm thấy thông tin này trong tài liệu."*
 

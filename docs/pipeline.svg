@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="300" viewBox="0 0 720 300"
+     font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace" font-size="14">
+  <!--
+    Terminal ASCII dong (SMIL). Cac dong "go dan" bang cach animate width cua rect trong clipPath.
+    Tat ca dung chung dur=9s + repeatCount=indefinite nen loop tu dong khop nhau.
+    Thuoc tinh width tinh cua rect = day du -> noi khong chay SMIL (vd VS Code) van thay terminal
+    da go xong (fallback). GitHub co chay SMIL nen se go dan.
+  -->
+  <defs>
+    <clipPath id="c0"><rect x="18" y="46" height="18" width="151"><animate attributeName="width" dur="9s" repeatCount="indefinite" keyTimes="0;0.056;1" values="0;151;151"/></rect></clipPath>
+    <clipPath id="c1"><rect x="34" y="72" height="18" width="350"><animate attributeName="width" dur="9s" repeatCount="indefinite" keyTimes="0;0.0667;0.1556;1" values="0;0;350;350"/></rect></clipPath>
+    <clipPath id="c2"><rect x="34" y="96" height="18" width="350"><animate attributeName="width" dur="9s" repeatCount="indefinite" keyTimes="0;0.1667;0.2556;1" values="0;0;350;350"/></rect></clipPath>
+    <clipPath id="c3"><rect x="34" y="120" height="18" width="350"><animate attributeName="width" dur="9s" repeatCount="indefinite" keyTimes="0;0.2667;0.3556;1" values="0;0;350;350"/></rect></clipPath>
+    <clipPath id="c4"><rect x="34" y="144" height="18" width="350"><animate attributeName="width" dur="9s" repeatCount="indefinite" keyTimes="0;0.3667;0.4556;1" values="0;0;350;350"/></rect></clipPath>
+    <clipPath id="c5"><rect x="18" y="178" height="18" width="185"><animate attributeName="width" dur="9s" repeatCount="indefinite" keyTimes="0;0.5;0.5556;1" values="0;0;185;185"/></rect></clipPath>
+    <clipPath id="c6"><rect x="34" y="202" height="18" width="350"><animate attributeName="width" dur="9s" repeatCount="indefinite" keyTimes="0;0.5667;0.6556;1" values="0;0;350;350"/></rect></clipPath>
+    <clipPath id="c7"><rect x="34" y="226" height="18" width="350"><animate attributeName="width" dur="9s" repeatCount="indefinite" keyTimes="0;0.6667;0.7556;1" values="0;0;350;350"/></rect></clipPath>
+    <clipPath id="c8"><rect x="34" y="250" height="18" width="355"><animate attributeName="width" dur="9s" repeatCount="indefinite" keyTimes="0;0.7667;0.8667;1" values="0;0;355;355"/></rect></clipPath>
+  </defs>
+
+  <!-- Khung terminal -->
+  <rect x="1" y="1" width="718" height="298" rx="12" fill="#0d1117" stroke="#30363d" stroke-width="1.5"/>
+  <!-- Thanh tieu de (bo goc tren, vuong goc duoi) -->
+  <rect x="1" y="1" width="718" height="34" rx="12" fill="#161b22"/>
+  <rect x="1" y="18" width="718" height="17" fill="#161b22"/>
+  <line x1="1" y1="34.5" x2="719" y2="34.5" stroke="#30363d" stroke-width="1"/>
+  <circle cx="22" cy="17.5" r="6" fill="#ff5f56"/>
+  <circle cx="42" cy="17.5" r="6" fill="#febc2e"/>
+  <circle cx="62" cy="17.5" r="6" fill="#28c840"/>
+  <text x="360" y="22" text-anchor="middle" font-size="12" fill="#8b949e">customer-rag-support - bash</text>
+
+  <!-- Cac dong lenh (moi dong bi clip de go dan) -->
+  <g clip-path="url(#c0)"><text x="20" y="60" fill="#7ee787">$ python ingest.py</text></g>
+  <g clip-path="url(#c1)"><text x="36" y="86" fill="#c9d1d9" xml:space="preserve">Đọc tài liệu (PDF, MD, TXT) .......... <tspan fill="#7ee787">ok</tspan></text></g>
+  <g clip-path="url(#c2)"><text x="36" y="110" fill="#c9d1d9" xml:space="preserve">Chunking (size=500, overlap=50) ...... <tspan fill="#7ee787">ok</tspan></text></g>
+  <g clip-path="url(#c3)"><text x="36" y="134" fill="#c9d1d9" xml:space="preserve">Embedding (text-embedding-3-small) ... <tspan fill="#7ee787">ok</tspan></text></g>
+  <g clip-path="url(#c4)"><text x="36" y="158" fill="#c9d1d9" xml:space="preserve">Lưu vào ChromaDB (persist) ........... <tspan fill="#7ee787">ok</tspan></text></g>
+
+  <g clip-path="url(#c5)"><text x="20" y="192" fill="#7ee787">$ streamlit run app.py</text></g>
+  <g clip-path="url(#c6)"><text x="36" y="216" fill="#c9d1d9" xml:space="preserve">Câu hỏi -&gt; Retrieval (top_k=4) ....... <tspan fill="#7ee787">ok</tspan></text></g>
+  <g clip-path="url(#c7)"><text x="36" y="240" fill="#c9d1d9" xml:space="preserve">Prompt + LLM (gpt-4o-mini) ........... <tspan fill="#7ee787">ok</tspan></text></g>
+  <g clip-path="url(#c8)"><text x="36" y="264" fill="#c9d1d9" xml:space="preserve">Trả lời + "Nguồn tham khảo" ......... <tspan fill="#58a6ff">done</tspan></text></g>
+
+  <!-- Con tro nhap nhay, nhay xuong theo dong dang go -->
+  <rect width="9" height="16" fill="#c9d1d9" x="162" y="47">
+    <animate attributeName="opacity" dur="1s" repeatCount="indefinite" keyTimes="0;0.45;0.5;0.95;1" values="1;1;0;0;1"/>
+    <animate attributeName="x" calcMode="discrete" dur="9s" repeatCount="indefinite"
+             keyTimes="0;0.0667;0.1667;0.2667;0.3667;0.5;0.5667;0.6667;0.7667;1"
+             values="162;360;360;360;360;194;360;360;368;368"/>
+    <animate attributeName="y" calcMode="discrete" dur="9s" repeatCount="indefinite"
+             keyTimes="0;0.0667;0.1667;0.2667;0.3667;0.5;0.5667;0.6667;0.7667;1"
+             values="47;73;97;121;145;179;203;227;251;251"/>
+  </rect>
+</svg>
