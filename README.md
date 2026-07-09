@@ -9,6 +9,13 @@ Xây bằng **RAG (Retrieval-Augmented Generation)**: tìm đoạn tài liệu l
 
 ## Kiến trúc (luồng xử lý)
 
+![Sơ đồ kiến trúc RAG cho hệ thống hỏi đáp nội quy công ty](docs/architecture.svg)
+
+Hệ thống gồm 2 giai đoạn: **nạp dữ liệu** (offline, chạy 1 lần bằng `ingest.py`) và **hỏi đáp** (mỗi câu hỏi, qua `app.py` / `rag.py`). Khi hỏi, hệ thống truy vấn ngược lại ChromaDB (đường nét đứt) để lấy các đoạn liên quan làm ngữ cảnh.
+
+<details>
+<summary>Xem bản Mermaid (GitHub tự render, tiện copy để chỉnh)</summary>
+
 ```mermaid
 flowchart TD
     subgraph ingest["NẠP DỮ LIỆU - chạy 1 lần: python ingest.py"]
@@ -26,12 +33,9 @@ flowchart TD
     end
 
     D -.->|truy vấn vector| R
-
-    classDef store fill:#e3f2fd,stroke:#1565c0,color:#0d47a1;
-    classDef out fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20;
-    class D store;
-    class ANS out;
 ```
+
+</details>
 
 **Các file chính:**
 

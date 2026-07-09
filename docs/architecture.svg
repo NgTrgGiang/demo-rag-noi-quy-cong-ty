@@ -1,0 +1,144 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="380" viewBox="0 0 900 380" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8"/>
+    </marker>
+    <marker id="arrowI" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#6366f1"/>
+    </marker>
+  </defs>
+
+  <!-- Nen panel (giup doc duoc ca o giao dien sang lan toi) -->
+  <rect x="2" y="2" width="896" height="376" rx="18" fill="#f8fafc" stroke="#e5e7eb" stroke-width="2"/>
+
+  <!-- Tieu de -->
+  <text x="30" y="40" font-size="20" font-weight="700" fill="#0f172a">Kiến trúc RAG - luồng xử lý</text>
+
+  <!-- ================= GIAI DOAN 1 ================= -->
+  <circle cx="36" cy="67" r="5" fill="#6366f1"/>
+  <text x="48" y="72" font-size="13" font-weight="700" fill="#475569">GIAI ĐOẠN 1: NẠP DỮ LIỆU  |  python ingest.py (chạy 1 lần)</text>
+
+  <!-- mui ten hang tren -->
+  <line x1="206" y1="138" x2="236" y2="138" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="416" y1="138" x2="446" y2="138" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="626" y1="138" x2="656" y2="138" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="221" y="130" text-anchor="middle" font-size="10" fill="#94a3b8">đọc text</text>
+  <text x="431" y="130" text-anchor="middle" font-size="10" fill="#94a3b8">cắt</text>
+  <text x="641" y="130" text-anchor="middle" font-size="10" fill="#94a3b8">vector</text>
+
+  <!-- Card 1: Tai lieu -->
+  <rect x="30" y="88" width="170" height="100" rx="14" fill="#ffffff" stroke="#e5e7eb" stroke-width="1.5"/>
+  <circle cx="115" cy="122" r="22" fill="#3b82f6" fill-opacity="0.12"/>
+  <g transform="translate(115,122)">
+    <rect x="-12" y="-16" width="24" height="32" rx="3" fill="#ffffff" stroke="#3b82f6" stroke-width="2"/>
+    <path d="M4 -16 L12 -8 L4 -8 Z" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5" stroke-linejoin="round"/>
+    <g stroke="#93c5fd" stroke-width="1.6" stroke-linecap="round">
+      <line x1="-7" y1="0" x2="7" y2="0"/>
+      <line x1="-7" y1="6" x2="7" y2="6"/>
+      <line x1="-7" y1="12" x2="2" y2="12"/>
+    </g>
+  </g>
+  <text x="115" y="156" text-anchor="middle" font-size="14" font-weight="700" fill="#0f172a">Tài liệu</text>
+  <text x="115" y="174" text-anchor="middle" font-size="11" fill="#64748b">PDF, MD, TXT</text>
+
+  <!-- Card 2: Chunking -->
+  <rect x="240" y="88" width="170" height="100" rx="14" fill="#ffffff" stroke="#e5e7eb" stroke-width="1.5"/>
+  <circle cx="325" cy="122" r="22" fill="#8b5cf6" fill-opacity="0.12"/>
+  <g transform="translate(325,122)">
+    <rect x="-16" y="-13" width="32" height="26" rx="3" fill="#f5f3ff" stroke="#8b5cf6" stroke-width="2"/>
+    <line x1="-5" y1="-13" x2="-5" y2="13" stroke="#8b5cf6" stroke-width="1.6" stroke-dasharray="3 3"/>
+    <line x1="6" y1="-13" x2="6" y2="13" stroke="#8b5cf6" stroke-width="1.6" stroke-dasharray="3 3"/>
+  </g>
+  <text x="325" y="156" text-anchor="middle" font-size="14" font-weight="700" fill="#0f172a">Chunking</text>
+  <text x="325" y="174" text-anchor="middle" font-size="11" fill="#64748b">cắt đoạn nhỏ (~500)</text>
+
+  <!-- Card 3: Embedding -->
+  <rect x="450" y="88" width="170" height="100" rx="14" fill="#ffffff" stroke="#e5e7eb" stroke-width="1.5"/>
+  <circle cx="535" cy="122" r="22" fill="#14b8a6" fill-opacity="0.12"/>
+  <g transform="translate(535,122)">
+    <path d="M -13 -12 H -18 V 12 H -13" fill="none" stroke="#14b8a6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 13 -12 H 18 V 12 H 13" fill="none" stroke="#14b8a6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <g fill="#0d9488">
+      <circle cx="-9" cy="0" r="2.3"/>
+      <circle cx="-3" cy="0" r="2.3"/>
+      <circle cx="3" cy="0" r="2.3"/>
+      <circle cx="9" cy="0" r="2.3"/>
+    </g>
+  </g>
+  <text x="535" y="156" text-anchor="middle" font-size="14" font-weight="700" fill="#0f172a">Embedding</text>
+  <text x="535" y="174" text-anchor="middle" font-size="11" fill="#64748b">text-embedding-3-small</text>
+
+  <!-- Card 4: ChromaDB -->
+  <rect x="660" y="88" width="170" height="100" rx="14" fill="#ffffff" stroke="#e5e7eb" stroke-width="1.5"/>
+  <circle cx="745" cy="122" r="22" fill="#6366f1" fill-opacity="0.12"/>
+  <g transform="translate(745,122)">
+    <path d="M -15 -12 V 10 A 15 5 0 0 0 15 10 V -12" fill="#eef2ff" stroke="#6366f1" stroke-width="2" stroke-linejoin="round"/>
+    <ellipse cx="0" cy="-12" rx="15" ry="5" fill="#e0e7ff" stroke="#6366f1" stroke-width="2"/>
+    <ellipse cx="0" cy="-1" rx="15" ry="5" fill="none" stroke="#6366f1" stroke-width="1.4"/>
+  </g>
+  <text x="745" y="156" text-anchor="middle" font-size="14" font-weight="700" fill="#0f172a">ChromaDB</text>
+  <text x="745" y="174" text-anchor="middle" font-size="11" fill="#64748b">lưu vector (persist)</text>
+
+  <!-- ================= GIAI DOAN 2 ================= -->
+  <circle cx="36" cy="215" r="5" fill="#f43f5e"/>
+  <text x="48" y="220" font-size="13" font-weight="700" fill="#475569">GIAI ĐOẠN 2: HỎI ĐÁP  |  app.py / rag.py (mỗi câu hỏi)</text>
+
+  <!-- mui ten hang duoi -->
+  <line x1="206" y1="286" x2="236" y2="286" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="416" y1="286" x2="446" y2="286" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="626" y1="286" x2="656" y2="286" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="221" y="278" text-anchor="middle" font-size="10" fill="#94a3b8">embed</text>
+  <text x="431" y="278" text-anchor="middle" font-size="10" fill="#94a3b8">ngữ cảnh</text>
+  <text x="641" y="278" text-anchor="middle" font-size="10" fill="#94a3b8">sinh câu</text>
+
+  <!-- Card 5: Cau hoi -->
+  <rect x="30" y="236" width="170" height="100" rx="14" fill="#ffffff" stroke="#e5e7eb" stroke-width="1.5"/>
+  <circle cx="115" cy="270" r="22" fill="#f59e0b" fill-opacity="0.12"/>
+  <g transform="translate(115,270)">
+    <rect x="-15" y="-14" width="30" height="22" rx="6" fill="#fffbeb" stroke="#f59e0b" stroke-width="2"/>
+    <path d="M -5 8 L -5 15 L 3 8 Z" fill="#fffbeb" stroke="#f59e0b" stroke-width="2" stroke-linejoin="round"/>
+    <text x="0" y="2" text-anchor="middle" font-size="15" font-weight="700" fill="#d97706">?</text>
+  </g>
+  <text x="115" y="304" text-anchor="middle" font-size="14" font-weight="700" fill="#0f172a">Câu hỏi</text>
+  <text x="115" y="322" text-anchor="middle" font-size="11" fill="#64748b">người dùng</text>
+
+  <!-- Card 6: Retrieval -->
+  <rect x="240" y="236" width="170" height="100" rx="14" fill="#ffffff" stroke="#e5e7eb" stroke-width="1.5"/>
+  <circle cx="325" cy="270" r="22" fill="#06b6d4" fill-opacity="0.12"/>
+  <g transform="translate(325,270)">
+    <circle cx="-3" cy="-3" r="9" fill="#ecfeff" stroke="#06b6d4" stroke-width="2.4"/>
+    <line x1="4" y1="4" x2="12" y2="12" stroke="#06b6d4" stroke-width="3" stroke-linecap="round"/>
+  </g>
+  <text x="325" y="304" text-anchor="middle" font-size="14" font-weight="700" fill="#0f172a">Retrieval</text>
+  <text x="325" y="322" text-anchor="middle" font-size="11" fill="#64748b">tìm top_k = 4 đoạn</text>
+
+  <!-- Card 7: Prompt + LLM -->
+  <rect x="450" y="236" width="170" height="100" rx="14" fill="#ffffff" stroke="#e5e7eb" stroke-width="1.5"/>
+  <circle cx="535" cy="270" r="22" fill="#f43f5e" fill-opacity="0.12"/>
+  <g transform="translate(535,270)">
+    <line x1="0" y1="-15" x2="0" y2="-19" stroke="#f43f5e" stroke-width="2"/>
+    <circle cx="0" cy="-20" r="2.2" fill="#f43f5e"/>
+    <rect x="-14" y="-13" width="28" height="24" rx="6" fill="#fff1f2" stroke="#f43f5e" stroke-width="2"/>
+    <circle cx="-5.5" cy="-2" r="2.6" fill="#f43f5e"/>
+    <circle cx="5.5" cy="-2" r="2.6" fill="#f43f5e"/>
+    <line x1="-6" y1="6" x2="6" y2="6" stroke="#f43f5e" stroke-width="2" stroke-linecap="round"/>
+  </g>
+  <text x="535" y="304" text-anchor="middle" font-size="14" font-weight="700" fill="#0f172a">Prompt + LLM</text>
+  <text x="535" y="322" text-anchor="middle" font-size="11" fill="#64748b">gpt-4o-mini</text>
+
+  <!-- Card 8: Tra loi -->
+  <rect x="660" y="236" width="170" height="100" rx="14" fill="#ffffff" stroke="#e5e7eb" stroke-width="1.5"/>
+  <circle cx="745" cy="270" r="22" fill="#22c55e" fill-opacity="0.12"/>
+  <g transform="translate(745,270)">
+    <rect x="-15" y="-14" width="30" height="22" rx="6" fill="#f0fdf4" stroke="#22c55e" stroke-width="2"/>
+    <path d="M 5 8 L 5 15 L -3 8 Z" fill="#f0fdf4" stroke="#22c55e" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M -6 -2 L -1 3 L 7 -6" fill="none" stroke="#16a34a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="745" y="304" text-anchor="middle" font-size="14" font-weight="700" fill="#0f172a">Trả lời</text>
+  <text x="745" y="322" text-anchor="middle" font-size="11" fill="#64748b">kèm Nguồn tham khảo</text>
+
+  <!-- Duong net dut: luc hoi thi truy van nguoc lai ChromaDB -->
+  <line x1="745" y1="188" x2="330" y2="236" stroke="#6366f1" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrowI)"/>
+  <rect x="487" y="196" width="96" height="20" rx="10" fill="#eef2ff" stroke="#c7d2fe" stroke-width="1"/>
+  <text x="535" y="210" text-anchor="middle" font-size="11" font-weight="600" fill="#4f46e5">truy vấn vector</text>
+</svg>
