@@ -9,33 +9,28 @@ Xây bằng **RAG (Retrieval-Augmented Generation)**: tìm đoạn tài liệu l
 
 ## Kiến trúc (luồng xử lý)
 
-```
-        [ Giai đoạn NẠP DỮ LIỆU - chạy 1 lần: python ingest.py ]
+```mermaid
+flowchart TD
+    subgraph ingest["NẠP DỮ LIỆU - chạy 1 lần: python ingest.py"]
+        direction TB
+        A["data/<br/>(PDF, MD, TXT)"] -->|đọc text| B["Chunking<br/>chunk_size=500, overlap=50"]
+        B -->|cắt đoạn nhỏ| C["Embedding<br/>text-embedding-3-small"]
+        C -->|vector hoá| D[("ChromaDB<br/>persist: chroma_db/")]
+    end
 
-   data/ (PDF/MD/TXT)
-          |  đọc text
-          v
-     Chunking            (RecursiveCharacterTextSplitter, chunk_size=500, overlap=50)
-          |  cắt thành đoạn nhỏ
-          v
-     Embedding           (text-embedding-3-small) -> biến mỗi đoạn thành vector
-          |
-          v
-     ChromaDB (persist)  -> lưu vector xuống ổ đĩa (thư mục chroma_db/)
+    subgraph query["HỎI ĐÁP - mỗi câu hỏi: app.py / rag.py"]
+        direction TB
+        Q["Câu hỏi"] -->|embed câu hỏi| R["Retrieval<br/>top_k=4 đoạn gần nghĩa nhất"]
+        R -->|ghép ngữ cảnh + trích nguồn| P["Prompt + LLM<br/>gpt-4o-mini"]
+        P --> ANS["Câu trả lời<br/>+ Nguồn tham khảo"]
+    end
 
+    D -.->|truy vấn vector| R
 
-        [ Giai đoạn HỎI ĐÁP - mỗi câu hỏi: app.py / rag.py ]
-
-   Câu hỏi
-          |  embed câu hỏi
-          v
-     Retrieval           -> tìm top_k=4 đoạn gần nghĩa nhất trong ChromaDB
-          |  ghép thành "ngữ cảnh" + kèm tên file/vị trí (để trích nguồn)
-          v
-     Prompt + LLM        (gpt-4o-mini) -> chỉ trả lời dựa trên ngữ cảnh
-          |
-          v
-     Câu trả lời + "Nguồn tham khảo"
+    classDef store fill:#e3f2fd,stroke:#1565c0,color:#0d47a1;
+    classDef out fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20;
+    class D store;
+    class ANS out;
 ```
 
 **Các file chính:**
