@@ -9,8 +9,8 @@ Chạy lại file này mỗi khi bạn THÊM hoặc SỬA tài liệu trong thư
     python ingest.py
 """
 
-import os
 import glob
+import os
 
 import chromadb
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -25,12 +25,13 @@ def doc_text(path: str) -> str:
     if ext == ".pdf":
         # Đọc PDF theo từng trang rồi ghép lại
         from pypdf import PdfReader
+
         reader = PdfReader(path)
         pages = [(page.extract_text() or "") for page in reader.pages]
         return "\n".join(pages)
 
     # .md và .txt: đọc trực tiếp dạng văn bản
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         return f.read()
 
 
@@ -70,8 +71,10 @@ def main():
             # Lưu metadata để sau này TRÍCH NGUỒN được: tên file + số thứ tự đoạn
             metadatas.append({"source": doc["source"], "chunk": i})
             ids.append(f"{doc['source']}::chunk::{i}")
-    print(f"Đã cắt thành {len(chunks)} đoạn (chunk_size={config.CHUNK_SIZE}, "
-          f"overlap={config.CHUNK_OVERLAP}).")
+    print(
+        f"Đã cắt thành {len(chunks)} đoạn (chunk_size={config.CHUNK_SIZE}, "
+        f"overlap={config.CHUNK_OVERLAP})."
+    )
 
     # 3) Nhúng (embed) tất cả các đoạn thành vector
     print(f"Đang nhúng {len(chunks)} đoạn bằng provider '{config.PROVIDER}'...")

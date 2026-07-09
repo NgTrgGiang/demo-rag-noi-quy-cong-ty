@@ -1,5 +1,12 @@
 # Bot hỏi đáp FAQ Nội quy công ty (RAG)
 
+![CI](https://github.com/NgTrgGiang/demo-rag-noi-quy-cong-ty/actions/workflows/ci.yml/badge.svg)
+![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
+![OpenAI](https://img.shields.io/badge/OpenAI-gpt--4o--mini-412991?logo=openai&logoColor=white)
+![ChromaDB](https://img.shields.io/badge/Vector%20DB-ChromaDB-ff6f61)
+![Streamlit](https://img.shields.io/badge/UI-Streamlit-FF4B4B?logo=streamlit&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-3DA639)
+
 ![Demo pipeline RAG dạng terminal](docs/pipeline.svg)
 
 > Ảnh terminal phía trên là **ảnh động**: animation chạy khi xem trên GitHub. (Trong preview của VS Code sẽ hiện bản tĩnh đã "gõ" xong — đó là hạn chế của SVG động, không phải lỗi.)
@@ -8,6 +15,33 @@ Chatbot trả lời câu hỏi **dựa trên tài liệu FAQ bạn cung cấp**,
 Khi tài liệu không có thông tin, bot trả lời: *"Mình không tìm thấy thông tin này trong tài liệu."*
 
 Xây bằng **RAG (Retrieval-Augmented Generation)**: tìm đoạn tài liệu liên quan trước, rồi mới để LLM trả lời dựa trên đó.
+
+---
+
+## Tính năng chính
+
+- **Trả lời kèm trích nguồn**: mỗi câu trả lời đính kèm tên tài liệu + đoạn đã dùng.
+- **Chống bịa (grounded)**: chỉ trả lời trong phạm vi tài liệu; ngoài phạm vi thì từ chối rõ ràng.
+- **Đổi provider 1 dòng**: OpenAI / Google Gemini / Ollama, cấu hình tập trung tại `config.py`.
+- **Vector store có persist**: ChromaDB lưu xuống ổ đĩa, không nạp lại mỗi lần chạy.
+- **Đánh giá 3 tầng**: retrieval (Hit Rate / MRR), keyword, LLM-as-judge — cho số liệu thật.
+- **Giao diện chat**: Streamlit, giữ lịch sử hội thoại, hiển thị Nguồn tham khảo.
+
+## Tech stack
+
+| Thành phần | Công nghệ |
+|-----------|-----------|
+| Ngôn ngữ | Python 3.10+ |
+| LLM + Embedding | OpenAI `gpt-4o-mini` + `text-embedding-3-small` |
+| Cắt văn bản | LangChain `RecursiveCharacterTextSplitter` |
+| Vector store | ChromaDB (persistent) |
+| Giao diện | Streamlit |
+| Chất lượng code | ruff (lint/format) · pytest · GitHub Actions CI |
+
+## Demo
+
+- **Live demo**: *(sẽ cập nhật sau khi deploy lên Streamlit Community Cloud)*
+- **Chạy local**: xem mục **Hướng dẫn chạy** bên dưới.
 
 ---
 
@@ -117,6 +151,16 @@ python eval.py
 python eval.py              # chạy đủ 3 tầng (tầng 3 tốn ~10 lượt gọi LLM)
 python eval.py --no-judge   # bỏ tầng 3 để khỏi tốn tiền
 ```
+
+**Kết quả trên bộ 10 câu hỏi mẫu** *(chạy `python eval.py` bằng key của bạn rồi điền số thật vào đây):*
+
+| Chỉ số | Kết quả |
+|--------|---------|
+| Hit Rate@4 (retrieval) | `__ / 9` |
+| MRR@4 | `0.__` |
+| Keyword | `__ / 10` |
+| LLM-judge | `__ / 10` |
+| Thời gian TB mỗi câu | `__ s` |
 
 **Cách đọc kết quả để biết sửa khâu nào:**
 - **Hit Rate / MRR thấp** -> lỗi khâu *retrieval* (tìm sai đoạn). Sửa: tăng `TOP_K`, chỉnh `CHUNK_SIZE`, hoặc đổi embedding.

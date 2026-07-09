@@ -7,8 +7,6 @@ Luồng của hàm answer(question):
           -> LLM sinh câu trả lời (chỉ dựa trên ngữ cảnh) + trích nguồn.
 """
 
-import chromadb
-
 import config
 
 # ============================================================
@@ -36,13 +34,16 @@ Hãy trả lời theo đúng các QUY TẮC BẮT BUỘC ở trên."""
 
 def _get_collection():
     """Mở collection Chroma đã persist. Báo lỗi rõ ràng nếu chưa ingest."""
+    # Import muộn (lazy) để việc chỉ dùng các hàm khác không cần cài sẵn chromadb.
+    import chromadb
+
     client = chromadb.PersistentClient(path=config.CHROMA_DIR)
     try:
         return client.get_collection(config.COLLECTION_NAME)
     except Exception:
         raise RuntimeError(
             "Chưa có dữ liệu trong Chroma. Hãy chạy 'python ingest.py' trước."
-        )
+        ) from None
 
 
 def retrieve(question: str, top_k: int | None = None) -> list[dict]:
@@ -66,14 +67,16 @@ def retrieve(question: str, top_k: int | None = None) -> list[dict]:
     docs = res["documents"][0]
     metas = res["metadatas"][0]
     dists = res["distances"][0]
-    for i, (doc, meta, dist) in enumerate(zip(docs, metas, dists), start=1):
-        results.append({
-            "label": f"Nguồn {i}",              # nhãn để LLM trích dẫn
-            "source": meta.get("source", "?"),  # tên file
-            "chunk": meta.get("chunk", "?"),    # vị trí đoạn trong file
-            "text": doc,                        # nội dung đoạn
-            "distance": dist,
-        })
+    for i, (doc, meta, dist) in enumerate(zip(docs, metas, dists, strict=False), start=1):
+        results.append(
+            {
+                "label": f"Nguồn {i}",  # nhãn để LLM trích dẫn
+                "source": meta.get("source", "?"),  # tên file
+                "chunk": meta.get("chunk", "?"),  # vị trí đoạn trong file
+                "text": doc,  # nội dung đoạn
+                "distance": dist,
+            }
+        )
     return results
 
 
@@ -112,6 +115,7 @@ def answer(question: str) -> dict:
 # Cho phép test nhanh từ dòng lệnh: python rag.py "câu hỏi của bạn"
 if __name__ == "__main__":
     import sys
+
     q = " ".join(sys.argv[1:]) or "Giờ làm việc hành chính là mấy giờ?"
     out = answer(q)
     print("Câu hỏi:", q)

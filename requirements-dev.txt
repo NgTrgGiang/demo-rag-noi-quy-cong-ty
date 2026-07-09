@@ -1,0 +1,4 @@
+# Thu vien phuc vu phat trien (khong can khi chay app).
+#   pip install -r requirements-dev.txt
+pytest>=8.0
+ruff==0.15.20

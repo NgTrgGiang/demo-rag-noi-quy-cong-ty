@@ -1,0 +1,25 @@
+# Cấu hình dự án + công cụ chất lượng code (ruff, pytest).
+# Đây là app chạy trực tiếp (không đóng gói pip), nên chỉ cần metadata tối thiểu.
+
+[project]
+name = "demo-rag-noi-quy-cong-ty"
+version = "0.1.0"
+description = "Bot hỏi đáp FAQ nội quy công ty dùng RAG (OpenAI + ChromaDB + Streamlit)"
+requires-python = ">=3.10"
+
+# ---- ruff: linter + formatter (thay cho black + flake8 + isort) ----
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+# E/F: lỗi cú pháp & pyflakes | I: sắp xếp import | UP: cú pháp Python mới | B: bẫy lỗi thường gặp
+select = ["E", "F", "I", "UP", "B"]
+# Bỏ qua E501 (dòng dài) vì code có nhiều comment tiếng Việt.
+ignore = ["E501"]
+
+# ---- pytest ----
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Cho phép test import các module ở thư mục gốc (config, rag, eval).
+pythonpath = ["."]

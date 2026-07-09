@@ -12,6 +12,10 @@ venv/
 __pycache__/
 *.pyc
 
+# Cache của công cụ test/lint
+.pytest_cache/
+.ruff_cache/
+
 # File hệ thống
 .DS_Store
 Thumbs.db

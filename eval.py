@@ -87,25 +87,30 @@ def llm_judge(question: str, expected: str, answer: str) -> bool:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--no-judge", action="store_true",
-                        help="Bỏ qua tầng LLM-as-judge (không tốn tiền gọi LLM chấm điểm).")
+    parser.add_argument(
+        "--no-judge",
+        action="store_true",
+        help="Bỏ qua tầng LLM-as-judge (không tốn tiền gọi LLM chấm điểm).",
+    )
     args = parser.parse_args()
     use_judge = not args.no_judge
 
-    with open("eval_questions.json", "r", encoding="utf-8") as f:
+    with open("eval_questions.json", encoding="utf-8") as f:
         questions = json.load(f)
 
     # Bộ đếm cho từng tầng
-    kw_correct = 0        # tầng 2
-    judge_correct = 0     # tầng 3
-    hit_count = 0         # tầng 1: số câu có "hit"
+    kw_correct = 0  # tầng 2
+    judge_correct = 0  # tầng 3
+    hit_count = 0  # tầng 1: số câu có "hit"
     reciprocal_sum = 0.0  # tầng 1: tổng 1/rank để tính MRR
-    retrieval_n = 0       # số câu có tính retrieval (loại câu ngoài tài liệu)
+    retrieval_n = 0  # số câu có tính retrieval (loại câu ngoài tài liệu)
     total_time = 0.0
 
     print("=" * 78)
-    print(f"BẮT ĐẦU CHẤM ĐIỂM  (provider={config.PROVIDER}, top_k={config.TOP_K}, "
-          f"LLM-judge={'BẬT' if use_judge else 'TẮT'})")
+    print(
+        f"BẮT ĐẦU CHẤM ĐIỂM  (provider={config.PROVIDER}, top_k={config.TOP_K}, "
+        f"LLM-judge={'BẬT' if use_judge else 'TẮT'})"
+    )
     print("=" * 78)
     # Tiêu đề bảng chi tiết
     print(f"{'#':>2}  {'Keyword':<8} {'Judge':<7} {'R-rank':<7} {'Time':<7} Câu hỏi")
@@ -149,8 +154,7 @@ def main():
             judge_str = "-"
 
         kw_str = "PASS" if kw_ok else "FAIL"
-        print(f"{i:>2}  {kw_str:<8} {judge_str:<7} {rank_str:<7} "
-              f"{elapsed:>5.2f}s  {q[:34]}")
+        print(f"{i:>2}  {kw_str:<8} {judge_str:<7} {rank_str:<7} {elapsed:>5.2f}s  {q[:34]}")
 
     # ============================================================
     # BẢNG TỔNG HỢP
@@ -177,7 +181,9 @@ def main():
     print("=" * 78)
     print("\nGợi ý đọc kết quả:")
     print("  - Hit Rate/MRR thấp  -> sửa khâu TÌM: tăng top_k, chỉnh chunk_size, đổi embedding.")
-    print("  - Retrieval cao nhưng Judge thấp -> sửa khâu TRẢ LỜI: chỉnh SYSTEM_PROMPT trong rag.py.")
+    print(
+        "  - Retrieval cao nhưng Judge thấp -> sửa khâu TRẢ LỜI: chỉnh SYSTEM_PROMPT trong rag.py."
+    )
     print("  - Keyword và Judge lệch nhau -> keyword đang chấm quá thô, tin Judge hơn.")
 
 
